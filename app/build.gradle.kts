@@ -21,6 +21,10 @@ android {
     buildFeatures {
         compose = true   // ✅ Vẫn bật Compose như cũ
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.3"
+    }
+
 
     // ❌ XÓA phần composeOptions — KHÔNG cần nữa với Kotlin 2.0
 
@@ -49,6 +53,13 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.compose.material:material-icons-extended:1.7.0")
+
+    implementation("androidx.compose.ui:ui:1.7.2")
+    implementation("androidx.compose.material3:material3:1.3.0")
+    implementation("androidx.navigation:navigation-compose:2.8.2")
+
 
     // 🧭 Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.8.3")

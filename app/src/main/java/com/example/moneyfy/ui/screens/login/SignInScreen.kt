@@ -71,7 +71,10 @@ fun SignInScreen(navController: NavController, viewModel: LoginViewModel) {
             Button(
                 onClick = {
                     if (viewModel.login(username, password)) {
-                        navController.navigate("home")
+                        navController.navigate("main") {
+                            popUpTo("login") { inclusive = true } // xoá màn login khỏi backstack
+                            launchSingleTop = true
+                        }
                     } else {
                         message = "Sai tên đăng nhập hoặc mật khẩu!"
                     }
