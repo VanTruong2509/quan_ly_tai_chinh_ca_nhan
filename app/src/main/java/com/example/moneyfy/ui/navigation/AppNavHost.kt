@@ -15,6 +15,7 @@ import com.example.moneyfy.ui.screens.calendar.CalendarScreen
 import com.example.moneyfy.ui.screens.home.HomeScreen
 import com.example.moneyfy.ui.screens.login.*
 import com.example.moneyfy.ui.screens.more.MoreScreen
+import com.example.moneyfy.ui.screens.setting.SettingsScreen
 import com.example.moneyfy.ui.screens.stats.StatisticsScreen
 
 @Composable
@@ -40,7 +41,6 @@ fun AppNavHost() {
 
 @Composable
 fun MainNavigation(rootNavController: NavHostController) {
-    // ⚠️ Dùng luôn cùng NavController để không reset navigation
     val innerNavController = rememberNavController()
 
     Scaffold(
@@ -52,10 +52,33 @@ fun MainNavigation(rootNavController: NavHostController) {
             startDestination = "home",
             modifier = Modifier.padding(padding)
         ) {
+            // 👉 Màn hình chính
             composable("home") { HomeScreen(innerNavController) }
+
+            // 👉 Màn hình lịch
             composable("calendar") { CalendarScreen() }
+
+            // 👉 Màn hình thống kê
             composable("statistics") { StatisticsScreen() }
-            composable("more") { MoreScreen() }
+
+            // 👉 Màn hình “Thêm”
+            composable("more") {
+                MoreScreen(
+                    onSettingsClick = {
+                        innerNavController.navigate("settings")
+                    }
+                )
+            }
+
+            // 👉 Màn hình “Cài đặt”
+            composable("settings") {
+                SettingsScreen(
+                    onBackClick = { innerNavController.popBackStack() },
+                    onItemClick = { item ->
+                        println("Bạn đã chọn: $item")
+                    }
+                )
+            }
         }
     }
 }

@@ -32,3 +32,13 @@ fun MoneyfyTheme(
         content = content
     )
 }
+
+
+@Composable
+fun QuanLyChiTieuTheme(content: @Composable () -> Unit) {
+    MaterialTheme(
+        colorScheme = DarkColorScheme,
+        typography = Typography,
+        content = content
+    )
+}

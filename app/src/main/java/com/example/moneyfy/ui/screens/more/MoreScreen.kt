@@ -1,6 +1,8 @@
 package com.example.moneyfy.ui.screens.more
 
+
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -14,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun MoreScreen() {
+fun MoreScreen(onSettingsClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -35,7 +37,6 @@ fun MoreScreen() {
             "Cài đặt", "Trợ giúp"
         )
 
-        // Hiển thị 2 cột mỗi hàng
         for (row in items.chunked(2)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -45,12 +46,16 @@ fun MoreScreen() {
                     FeatureCard(
                         title = title,
                         modifier = Modifier
-                            .weight(1f) // ✅ đặt weight ở đây (trong Row)
-                            .height(100.dp)
+                            .weight(1f)
+                            .height(100.dp),
+                        onClick = {
+                            if (title == "Cài đặt") {
+                                onSettingsClick()
+                            }
+                        }
                     )
                 }
 
-                // Nếu hàng chỉ có 1 phần tử, thêm Box rỗng để căn đều
                 if (row.size == 1) {
                     Spacer(modifier = Modifier.weight(1f))
                 }
@@ -60,9 +65,9 @@ fun MoreScreen() {
 }
 
 @Composable
-fun FeatureCard(title: String, modifier: Modifier = Modifier) {
+fun FeatureCard(title: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
     ) {
         Box(
