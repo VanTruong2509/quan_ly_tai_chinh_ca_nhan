@@ -28,7 +28,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
     var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { HomeTopBar() },
+        topBar = { HomeTopBar(navController) },
         containerColor = Color(0xFF101010)
     ) { padding ->
         Column(
@@ -120,15 +120,15 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeTopBar() {
+fun HomeTopBar(navController: NavController) {
     TopAppBar(
         title = { Text("Tổng quan", color = Color.White, fontWeight = FontWeight.Bold) },
         actions = {
-            IconButton(onClick = { /* Thông báo */ }) {
-                Icon(Icons.Default.Notifications, contentDescription = null, tint = Color.White)
+            IconButton(onClick = { navController.navigate("notification") }) {
+                Icon(Icons.Default.Notifications, contentDescription = "Thông báo", tint = Color.White)
             }
-            IconButton(onClick = { /* Cài đặt */ }) {
-                Icon(Icons.Default.Settings, contentDescription = null, tint = Color.White)
+            IconButton(onClick = { navController.navigate("settings") }) {
+                Icon(Icons.Default.Settings, contentDescription = "Cài đặt", tint = Color.White)
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)

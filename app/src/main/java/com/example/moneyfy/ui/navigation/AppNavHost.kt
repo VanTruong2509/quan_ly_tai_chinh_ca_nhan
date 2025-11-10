@@ -15,8 +15,11 @@ import com.example.moneyfy.ui.screens.calendar.CalendarScreen
 import com.example.moneyfy.ui.screens.home.HomeScreen
 import com.example.moneyfy.ui.screens.login.*
 import com.example.moneyfy.ui.screens.more.MoreScreen
+import com.example.moneyfy.ui.screens.notification.NotificationScreen
 import com.example.moneyfy.ui.screens.setting.SettingsScreen
-import com.example.moneyfy.ui.screens.stats.StatisticsScreen
+import com.example.moneyfy.ui.screens.stats.StatsScreen
+import com.example.moneyfy.ui.screens.balance.BalanceScreen
+import com.example.moneyfy.ui.screens.expense.ExpenseScreen
 
 @Composable
 fun AppNavHost() {
@@ -52,16 +55,12 @@ fun MainNavigation(rootNavController: NavHostController) {
             startDestination = "home",
             modifier = Modifier.padding(padding)
         ) {
-            // 👉 Màn hình chính
             composable("home") { HomeScreen(innerNavController) }
-
-            // 👉 Màn hình lịch
             composable("calendar") { CalendarScreen() }
+            composable("statistics") { StatsScreen(innerNavController) } // ✅ Đã truyền navController
+            composable("balance") { BalanceScreen(innerNavController) }
+            composable("expense") { ExpenseScreen(innerNavController) }
 
-            // 👉 Màn hình thống kê
-            composable("statistics") { StatisticsScreen() }
-
-            // 👉 Màn hình “Thêm”
             composable("more") {
                 MoreScreen(
                     onSettingsClick = {
@@ -70,13 +69,18 @@ fun MainNavigation(rootNavController: NavHostController) {
                 )
             }
 
-            // 👉 Màn hình “Cài đặt”
             composable("settings") {
                 SettingsScreen(
                     onBackClick = { innerNavController.popBackStack() },
                     onItemClick = { item ->
                         println("Bạn đã chọn: $item")
                     }
+                )
+            }
+
+            composable("notification") {
+                NotificationScreen(
+                    onBackClick = { innerNavController.popBackStack() }
                 )
             }
         }
