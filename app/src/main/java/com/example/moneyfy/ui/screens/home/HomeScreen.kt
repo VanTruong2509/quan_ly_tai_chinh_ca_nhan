@@ -13,17 +13,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import java.text.NumberFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
-    val totalMoney by viewModel.totalMoney.collectAsState()
-    val spendings = viewModel.spendings
+    val totalMoney by viewModel.totalMoney.collectAsState(initial = 0f)
+    val weeklySpending by remember { derivedStateOf { viewModel.getWeeklySpending() } }
 
     var showDialog by remember { mutableStateOf(false) }
 
@@ -57,55 +61,27 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                 )
             }
 
-            // --- Biểu đồ ---
+            // --- Biểu đồ chi tiêu tuần ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp)
+                    .height(180.dp)
                     .background(Color(0xFF1E1E1E), shape = MaterialTheme.shapes.medium)
                     .padding(12.dp)
             ) {
                 Column {
                     Text(
-                        "Chi tiêu gần đây",
+                        "Chi tiêu tuần",
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(Modifier.height(8.dp))
-                    LineChart(spendings)
-                }
-            }
-
-            // --- Lịch ---
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF1E1E1E), shape = MaterialTheme.shapes.medium)
-                    .padding(12.dp)
-            ) {
-                Column {
-                    Text("Lịch", color = Color.White, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    SimpleCalendar()
-                }
-            }
-
-            // --- Thống kê ---
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF1E1E1E), shape = MaterialTheme.shapes.medium)
-                    .padding(12.dp)
-            ) {
-                Column {
-                    Text("Thống kê chi tiêu", color = Color.White, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    StatsSection(spendings)
+                    LineChart(weeklySpending)
                 }
             }
         }
 
-        // --- Dialog thêm chi tiêu ---
+        // Dialog thêm chi tiêu
         if (showDialog) {
             AddSpendingDialog(
                 onDismiss = { showDialog = false },
@@ -153,103 +129,92 @@ fun InfoCard(title: String, value: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun LineChart(spendings: List<Spending>) {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        if (spendings.isEmpty()) return@Canvas
+    if (spendings.isEmpty()) return
 
-        val pathColor = Color(0xFF00C853)
-        val width = size.width
-        val height = size.height
-        val step = width / (spendings.size - 1)
-        val maxAmount = (spendings.maxOfOrNull { it.amount } ?: 1f)
-
-        // Trục ngang
-        drawLine(
-            color = Color.Gray.copy(alpha = 0.3f),
-            start = Offset(0f, height),
-            end = Offset(width, height),
-            strokeWidth = 2f
-        )
-
-        // Vẽ đường biểu đồ
-        spendings.forEachIndexed { index, item ->
-            if (index > 0) {
-                val prev = spendings[index - 1]
-                drawLine(
-                    color = pathColor,
-                    start = Offset((index - 1) * step, height - (prev.amount / maxAmount) * height),
-                    end = Offset(index * step, height - (item.amount / maxAmount) * height),
-                    strokeWidth = 5f
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun SimpleCalendar() {
     val days = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
+    val data: List<Float> = spendings.map { it.amount }
+    val maxAmount: Float = data.maxOrNull() ?: 1f
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        days.forEach { day ->
-            Text(day, color = Color.Gray, fontSize = 13.sp)
-        }
-    }
-    Spacer(Modifier.height(8.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        (1..7).forEach { day ->
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(Color(0xFF2E2E2E), shape = MaterialTheme.shapes.small),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("$day", color = Color.White, fontSize = 13.sp)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp)
+                .background(Color(0xFF1E1E1E))
+        ) {
+            val width: Float = size.width
+            val height: Float = size.height
+            val step: Float = if (data.size > 1) width / (data.size - 1) else width
+
+            // Trục ngang
+            drawLine(
+                color = Color.Gray.copy(alpha = 0.3f),
+                start = Offset(0f, height),
+                end = Offset(width, height),
+                strokeWidth = 2f
+            )
+
+            // Vẽ đường biểu đồ
+            data.forEachIndexed { index: Int, amount: Float ->
+                if (index > 0) {
+                    val prev: Float = data[index - 1]
+                    drawLine(
+                        color = Color(0xFF00C853),
+                        start = Offset((index - 1) * step, height - (prev / maxAmount) * height),
+                        end = Offset(index * step, height - (amount / maxAmount) * height),
+                        strokeWidth = 3f
+                    )
+                }
             }
         }
-    }
-}
 
-@Composable
-fun StatsSection(spendings: List<Spending>) {
-    val total = spendings.sumOf { it.amount.toDouble() }
-    val avg = if (spendings.isNotEmpty()) total / spendings.size else 0.0
+        Spacer(modifier = Modifier.height(8.dp))
 
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Tổng chi tiêu: ${"%,.0f".format(total)} VND", color = Color.White, fontSize = 14.sp)
-        Text("Trung bình: ${"%,.0f".format(avg)} VND/lần", color = Color.Gray, fontSize = 13.sp)
-        Text("Số lần chi tiêu: ${spendings.size}", color = Color.Gray, fontSize = 13.sp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            days.forEach { day: String ->
+                Text(day, color = Color.Gray, fontSize = 12.sp)
+            }
+        }
     }
 }
 
 @Composable
 fun AddSpendingDialog(onDismiss: () -> Unit, onAdd: (Float) -> Unit) {
-    var input by remember { mutableStateOf("") }
+    var rawInput by remember { mutableStateOf("") } // giá trị thô để convert sang Float
+    var displayInput by remember { mutableStateOf("") } // giá trị hiển thị format
+
+    fun formatNumber(value: String): String {
+        return try {
+            val number = value.toFloat()
+            NumberFormat.getNumberInstance(Locale.US).format(number.toInt())
+        } catch (e: Exception) {
+            ""
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                val amount = input.toFloatOrNull()
-                if (amount != null && amount > 0) onAdd(amount)
-            }) {
-                Text("Thêm")
-            }
+                val amount = rawInput.toFloatOrNull()
+                if (amount != null && amount > 0f) onAdd(amount)
+            }) { Text("Thêm") }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Hủy") }
-        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Hủy") } },
         title = { Text("Thêm giao dịch") },
         text = {
             OutlinedTextField(
-                value = input,
-                onValueChange = { input = it },
-                label = { Text("Số tiền (VND)") }
+                value = displayInput,
+                onValueChange = { input ->
+                    // Chỉ giữ các ký tự số
+                    rawInput = input.filter { it.isDigit() }
+                    displayInput = formatNumber(rawInput)
+                },
+                label = { Text("Số tiền (VND)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
         },
         containerColor = Color(0xFF1E1E1E),

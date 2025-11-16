@@ -1,7 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("org.jetbrains.kotlin.plugin.compose")   // 🆕 BẮT BUỘC từ Kotlin 2.0
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("kotlin-kapt") // ✅ cần cho Room
+    kotlin("kapt")
 }
 
 android {
@@ -19,14 +21,12 @@ android {
     }
 
     buildFeatures {
-        compose = true   // ✅ Vẫn bật Compose như cũ
+        compose = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.3"
     }
-
-
-    // ❌ XÓA phần composeOptions — KHÔNG cần nữa với Kotlin 2.0
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -39,37 +39,46 @@ android {
 }
 
 dependencies {
+    // Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
 
+    // Coil (load image)
     implementation("io.coil-kt:coil-compose:2.6.0")
 
-    // 🧩 Jetpack Compose
+    // Jetpack Compose BOM
     implementation(platform("androidx.compose:compose-bom:2024.10.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
-
     implementation("androidx.compose.ui:ui:1.7.2")
     implementation("androidx.compose.material3:material3:1.3.0")
-    implementation("androidx.navigation:navigation-compose:2.8.2")
 
-
-    // 🧭 Navigation Compose
+    // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.8.3")
 
-    // 🧠 ViewModel + Compose
+    // ViewModel + Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
 
-    // 📱 Activity Compose
+    // Activity Compose
     implementation("androidx.activity:activity-compose:1.9.3")
 
+    // DataStore (Preferences)
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Room (SQLite)
+    val room_version = "2.6.1"
+
+    implementation("androidx.room:room-runtime:$room_version")
+    kapt("androidx.room:room-compiler:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

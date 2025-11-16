@@ -7,10 +7,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
+import com.example.moneyfy.data.AppDatabase
 import com.example.moneyfy.ui.screens.calendar.CalendarScreen
 import com.example.moneyfy.ui.screens.home.HomeScreen
 import com.example.moneyfy.ui.screens.login.*
@@ -24,7 +26,15 @@ import com.example.moneyfy.ui.screens.expense.ExpenseScreen
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
-    val sharedViewModel: LoginViewModel = viewModel()
+    val context = LocalContext.current
+
+    // Lấy UserDao từ Room
+    val userDao = AppDatabase.getDatabase(context).userDao()
+
+    // Khởi tạo LoginViewModel với factory
+    val sharedViewModel: LoginViewModel = viewModel(
+        factory = LoginViewModelFactory(userDao)
+    )
 
     NavHost(
         navController = navController,
@@ -57,24 +67,20 @@ fun MainNavigation(rootNavController: NavHostController) {
         ) {
             composable("home") { HomeScreen(innerNavController) }
             composable("calendar") { CalendarScreen() }
-            composable("statistics") { StatsScreen(innerNavController) } // ✅ Đã truyền navController
+            composable("statistics") { StatsScreen(innerNavController) }
             composable("balance") { BalanceScreen(innerNavController) }
             composable("expense") { ExpenseScreen(innerNavController) }
 
             composable("more") {
                 MoreScreen(
-                    onSettingsClick = {
-                        innerNavController.navigate("settings")
-                    }
+                    onSettingsClick = { innerNavController.navigate("settings") }
                 )
             }
 
             composable("settings") {
                 SettingsScreen(
                     onBackClick = { innerNavController.popBackStack() },
-                    onItemClick = { item ->
-                        println("Bạn đã chọn: $item")
-                    }
+                    onItemClick = { item -> println("Bạn đã chọn: $item") }
                 )
             }
 

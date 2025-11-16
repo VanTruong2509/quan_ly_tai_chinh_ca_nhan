@@ -21,6 +21,7 @@ import com.example.moneyfy.R
 
 @Composable
 fun LoginScreen(navController: NavController) {
+    // Gradient nền màn hình
     val gradient = Brush.verticalGradient(
         colors = listOf(Color(0xFF0086FF), Color.Black)
     )
@@ -42,9 +43,9 @@ fun LoginScreen(navController: NavController) {
                 .padding(bottom = 16.dp)
         )
 
-        // Nút đăng nhập bằng email
+        // Nút đăng nhập bằng Email
         Button(
-            onClick = { navController.navigate("signin") },
+            onClick = { navController.navigate("signin") }, // điều hướng sang màn hình SignIn
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C853))
         ) {
@@ -75,12 +76,13 @@ fun LoginScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Link Đăng ký
         Text(
             text = "Đăng ký",
             color = Color.White,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.clickable {
-                navController.navigate("register")
+                navController.navigate("register") // điều hướng sang màn hình đăng ký
             }
         )
     }
@@ -93,9 +95,12 @@ fun SocialIcon(iconRes: Int, name: String) {
         colors = CardDefaults.cardColors(containerColor = Color.White),
         modifier = Modifier
             .size(56.dp)
-            .clickable { /* TODO: Xử lý login mạng xã hội */ }
+            .clickable { /* TODO: Xử lý đăng nhập mạng xã hội */ }
     ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
             Image(
                 painter = painterResource(id = iconRes),
                 contentDescription = name,

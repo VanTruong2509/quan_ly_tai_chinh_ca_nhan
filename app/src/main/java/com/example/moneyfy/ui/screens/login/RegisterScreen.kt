@@ -9,15 +9,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
 @Composable
-fun RegisterScreen(navController: NavController, viewModel: LoginViewModel) { // ✅ nhận ViewModel từ MainActivity
-    val gradient = Brush.verticalGradient(
-        colors = listOf(Color(0xFF0086FF), Color.Black)
-    )
+fun RegisterScreen(navController: NavController, viewModel: LoginViewModel) {
+    val gradient = Brush.verticalGradient(listOf(Color(0xFF0086FF), Color.Black))
 
     Column(
         modifier = Modifier
@@ -30,37 +27,49 @@ fun RegisterScreen(navController: NavController, viewModel: LoginViewModel) { //
         OutlinedTextField(
             value = viewModel.username.value,
             onValueChange = { viewModel.username.value = it },
-            label = { Text("Tên người dùng") }
+            label = { Text("Tên người dùng") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = viewModel.email.value,
             onValueChange = { viewModel.email.value = it },
-            label = { Text("Email") }
+            label = { Text("Email") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = viewModel.password.value,
             onValueChange = { viewModel.password.value = it },
             label = { Text("Mật khẩu") },
-            visualTransformation = PasswordVisualTransformation()
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(16.dp))
+
         Button(
             onClick = {
-                viewModel.onRegisterClick {
-                    navController.navigate("signin") // ✅ sau khi đăng ký xong → sang đăng nhập
+                viewModel.register {
+                    navController.navigate("signin") {
+                        popUpTo("register") { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
             },
             shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C853))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C853)),
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text("Đăng ký")
         }
 
-        viewModel.errorMessage.value?.let { error ->
+        if (viewModel.errorMessage.value.isNotBlank()) {
             Spacer(Modifier.height(8.dp))
-            Text(text = error, color = Color.Red)
+            Text(text = viewModel.errorMessage.value, color = Color.Red)
         }
     }
 }
