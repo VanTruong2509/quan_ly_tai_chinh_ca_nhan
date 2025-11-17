@@ -3,6 +3,8 @@ package com.example.moneyfy.ui.screens.add
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,13 +14,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Note
+
 
 @Composable
-fun AddExpenseScreen(navController: NavController) {
+fun AddExpenseScreen(
+    navController: NavController,
+    selectedCategory: String? = null
+) {
 
     var amount by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("Danh mục") }
+
+    var category by remember { mutableStateOf(selectedCategory ?: "Danh mục") }
 
     Column(
         modifier = Modifier
@@ -27,6 +38,7 @@ fun AddExpenseScreen(navController: NavController) {
             .padding(16.dp)
     ) {
 
+        // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -49,6 +61,7 @@ fun AddExpenseScreen(navController: NavController) {
 
         Spacer(Modifier.height(12.dp))
 
+        // Tabs
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -66,16 +79,43 @@ fun AddExpenseScreen(navController: NavController) {
 
         Spacer(Modifier.height(20.dp))
 
-        FormItem("Danh mục", category) { navController.navigate("category_list") }
-        FormItem("VNĐ", amount) {}
-        FormItem("Ngày & giờ", "Hôm nay 7:00") {}
-        FormItem("Ghi chú", note) {}
+        // ==== FORM ITEMS ====
+        FormItem(
+            label = "Danh mục",
+            value = category,
+            icon = Icons.Default.Category,
+            onClick = { navController.navigate("category_list") }
+        )
+
+        FormItem(
+            label = "VNĐ",
+            value = amount,
+            icon = Icons.Default.AttachMoney,
+            onClick = { }
+        )
+
+        FormItem(
+            label = "Ngày & giờ",
+            value = "Hôm nay 7:00",
+            icon = Icons.Default.AccessTime,
+            onClick = { }
+        )
+
+        FormItem(
+            label = "Ghi chú",
+            value = note,
+            icon = Icons.Default.Note,
+            onClick = { }
+        )
+
 
         Spacer(Modifier.weight(1f))
 
         Button(
             onClick = {},
-            modifier = Modifier.fillMaxWidth().height(55.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(55.dp),
             shape = RoundedCornerShape(40.dp),
             colors = ButtonDefaults.buttonColors(Color(0xFF8A2BE2))
         ) {

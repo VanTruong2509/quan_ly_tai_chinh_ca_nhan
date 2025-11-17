@@ -12,6 +12,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Note
 
 @Composable
 fun AddTransactionScreen(navController: NavController) {
@@ -81,26 +86,31 @@ fun AddTransactionScreen(navController: NavController) {
         FormItem(
             label = "Danh mục",
             value = category,
+            icon = Icons.Default.Category,
             onClick = { navController.navigate("category_list") }
         )
 
         FormItem(
             label = "VND",
             value = amount,
+            icon = Icons.Default.AttachMoney,
             onClick = { }
         )
 
         FormItem(
             label = "Ngày & giờ",
             value = "Hôm nay 7:00",
+            icon = Icons.Default.AccessTime,
             onClick = { }
         )
 
         FormItem(
             label = "Ghi chú",
             value = note,
+            icon = Icons.Default.Note,
             onClick = { }
         )
+
 
         Spacer(Modifier.weight(1f))
 

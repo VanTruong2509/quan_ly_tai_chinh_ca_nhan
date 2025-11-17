@@ -12,7 +12,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
+
 import com.example.moneyfy.data.AppDatabase
+
 import com.example.moneyfy.ui.screens.calendar.CalendarScreen
 import com.example.moneyfy.ui.screens.home.HomeScreen
 import com.example.moneyfy.ui.screens.login.*
@@ -21,22 +24,24 @@ import com.example.moneyfy.ui.screens.notification.NotificationScreen
 import com.example.moneyfy.ui.screens.setting.SettingsScreen
 import com.example.moneyfy.ui.screens.stats.StatsScreen
 import com.example.moneyfy.ui.screens.balance.BalanceScreen
-import com.example.moneyfy.ui.screens.expense.ExpenseScreen
 
-// 3 màn bạn thêm (bạn đổi lại package nếu khác)
 import com.example.moneyfy.ui.screens.add.AddTransactionScreen
 import com.example.moneyfy.ui.screens.add.AddExpenseScreen
 import com.example.moneyfy.ui.screens.add.CategoryListScreen
+import com.example.moneyfy.ui.screens.add.SubCategoryScreen
+
+import com.example.moneyfy.ui.screens.invest.InvestmentScreen
+import com.example.moneyfy.ui.screens.invest.PlanningScreen
+import com.example.moneyfy.ui.screens.account.CreateAccountScreen
+
 
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // Lấy UserDao từ Room
     val userDao = AppDatabase.getDatabase(context).userDao()
 
-    // Khởi tạo LoginViewModel với factory
     val sharedViewModel: LoginViewModel = viewModel(
         factory = LoginViewModelFactory(userDao)
     )
@@ -45,12 +50,10 @@ fun AppNavHost() {
         navController = navController,
         startDestination = "login"
     ) {
-        // ==== LOGIN ====
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController, sharedViewModel) }
         composable("signin") { SignInScreen(navController, sharedViewModel) }
 
-        // ==== MAIN ====
         composable("main") {
             MainNavigation(navController)
         }
@@ -59,79 +62,104 @@ fun AppNavHost() {
 
 @Composable
 fun MainNavigation(rootNavController: NavHostController) {
+
     val innerNavController = rememberNavController()
 
     Scaffold(
         bottomBar = { BottomNavigationBar(innerNavController) },
         containerColor = Color(0xFF101010)
     ) { padding ->
+
         NavHost(
             navController = innerNavController,
             startDestination = "home",
             modifier = Modifier.padding(padding)
         ) {
 
-            // ==== TAB MẶC ĐỊNH ====
             composable("home") { HomeScreen(innerNavController) }
             composable("calendar") { CalendarScreen() }
             composable("statistics") { StatsScreen(innerNavController) }
             composable("balance") { BalanceScreen(innerNavController) }
 
+            // More
             composable("more") {
                 MoreScreen(
-                    onSettingsClick = { innerNavController.navigate("settings") }
+                    onSettingsClick = { innerNavController.navigate("settings") },
+                    onInvestmentClick = { innerNavController.navigate("investment") },
+                    onPlanningClick = { innerNavController.navigate("planning") } // ⭐ THÊM ROUTE
                 )
             }
 
+            // Settings
             composable("settings") {
                 SettingsScreen(
                     onBackClick = { innerNavController.popBackStack() },
-                    onItemClick = { item -> println("Bạn đã chọn: $item") }
+                    onItemClick = { println("Clicked: $it") }
                 )
             }
 
+            // Notification
             composable("notification") {
                 NotificationScreen(
                     onBackClick = { innerNavController.popBackStack() }
                 )
             }
 
-            // =======================
-            //        THÊM MỚI
-            // =======================
+            // Add transaction
+            composable("add_transaction") { AddTransactionScreen(innerNavController) }
+            composable("add_expense") { AddExpenseScreen(innerNavController) }
+            composable("category_list") { CategoryListScreen(innerNavController) }
 
-            // 👉 1. Màn hình chính "Thêm giao dịch" (màn bên trái)
-            composable("add_transaction") {
-                AddTransactionScreen(innerNavController)
+            // Sub Category
+            composable(
+                "sub_category/{id}/{name}",
+                arguments = listOf(
+                    navArgument("id") { type = androidx.navigation.NavType.IntType },
+                    navArgument("name") { type = androidx.navigation.NavType.StringType }
+                )
+            ) { backStackEntry ->
+
+                val catId = backStackEntry.arguments?.getInt("id") ?: 0
+                val catName = backStackEntry.arguments?.getString("name") ?: ""
+
+                SubCategoryScreen(
+                    navController = innerNavController,
+                    categoryId = catId,
+                    categoryName = catName
+                )
             }
 
-            // 👉 2. Màn hình "Chi tiêu / Thu nhập" (màn giữa)
-            composable("add_expense") {
-                AddExpenseScreen(innerNavController)
+            // ⭐ MÀN ĐẦU TƯ
+            composable("investment") {
+                InvestmentScreen(onBack = { innerNavController.popBackStack() })
             }
 
-            // 👉 3. Màn hình chọn danh mục (màn phải)
-            composable("category_list") {
-                CategoryListScreen(innerNavController)
+            // ⭐ MÀN LẬP KẾ HOẠCH
+            composable("planning") {
+                PlanningScreen(onBack = { innerNavController.popBackStack() })
             }
+            // ⭐ MÀN TẠO TÀI KHOẢN
+            composable("create_account") {
+                CreateAccountScreen(onBack = { innerNavController.popBackStack() })
+            }
+
         }
     }
 }
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
+
     val items = listOf(
         BottomItem("home", "Tổng quan", Icons.Default.Home),
         BottomItem("calendar", "Lịch", Icons.Default.CalendarMonth),
-
-        // 👉 Nút THÊM (mở màn add_transaction)
-        BottomItem("add_transaction", "Chi tiêu", Icons.Default.AddCircle),
-
+        BottomItem("add_transaction", "Thêm", Icons.Default.AddCircle),
         BottomItem("statistics", "Thống kê", Icons.Default.BarChart),
         BottomItem("more", "Thêm", Icons.Default.MoreHoriz)
     )
 
     NavigationBar(containerColor = Color.Black) {
+
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 

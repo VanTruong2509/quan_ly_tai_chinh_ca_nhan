@@ -53,11 +53,13 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                     modifier = Modifier.weight(1f)
                 )
                 InfoCard(
-                    title = "Thêm giao dịch",
+                    title = "Thêm tài khoản",
                     value = "+",
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { showDialog = true }
+                        .clickable {
+                            navController.navigate("create_account")
+                        }
                 )
             }
 
