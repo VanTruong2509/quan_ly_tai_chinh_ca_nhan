@@ -4,6 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
@@ -13,23 +15,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
+import com.example.moneyfy.data.model.Spending
 import java.text.NumberFormat
-import java.util.Locale
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
-    val totalMoney by viewModel.totalMoney.collectAsState(initial = 0f)
+    val totalMoney by viewModel.totalMoney.collectAsState()
     val weeklySpending by remember { derivedStateOf { viewModel.getWeeklySpending() } }
-
-    var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { HomeTopBar(navController) },
@@ -49,15 +48,15 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
             ) {
                 InfoCard(
                     title = "TIỀN MẶT",
-                    value = "${"%,.0f".format(totalMoney)} VND",
+                    value = "${NumberFormat.getNumberInstance(Locale.US).format(totalMoney.toInt())} VND",
                     modifier = Modifier.weight(1f)
                 )
                 InfoCard(
-                    title = "Thêm giao dịch",
+                    title = "Thêm tài khoản",
                     value = "+",
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { showDialog = true }
+                        .clickable { navController.navigate("create_account") }
                 )
             }
 
@@ -79,17 +78,25 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                     LineChart(weeklySpending)
                 }
             }
-        }
 
-        // Dialog thêm chi tiêu
-        if (showDialog) {
-            AddSpendingDialog(
-                onDismiss = { showDialog = false },
-                onAdd = { amount ->
-                    viewModel.addSpending(amount)
-                    showDialog = false
-                }
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                "Giao dịch gần đây",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
             )
+
+            // --- Danh sách chi tiêu ---
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(viewModel.spendings.reversed()) { spending ->
+                    SpendingItem(spending)
+                }
+            }
         }
     }
 }
@@ -142,9 +149,9 @@ fun LineChart(spendings: List<Spending>) {
                 .height(140.dp)
                 .background(Color(0xFF1E1E1E))
         ) {
-            val width: Float = size.width
-            val height: Float = size.height
-            val step: Float = if (data.size > 1) width / (data.size - 1) else width
+            val width = size.width
+            val height = size.height
+            val step = if (data.size > 1) width / (data.size - 1) else width
 
             // Trục ngang
             drawLine(
@@ -155,9 +162,9 @@ fun LineChart(spendings: List<Spending>) {
             )
 
             // Vẽ đường biểu đồ
-            data.forEachIndexed { index: Int, amount: Float ->
+            data.forEachIndexed { index, amount ->
                 if (index > 0) {
-                    val prev: Float = data[index - 1]
+                    val prev = data[index - 1]
                     drawLine(
                         color = Color(0xFF00C853),
                         start = Offset((index - 1) * step, height - (prev / maxAmount) * height),
@@ -174,7 +181,7 @@ fun LineChart(spendings: List<Spending>) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            days.forEach { day: String ->
+            days.forEach { day ->
                 Text(day, color = Color.Gray, fontSize = 12.sp)
             }
         }
@@ -182,43 +189,22 @@ fun LineChart(spendings: List<Spending>) {
 }
 
 @Composable
-fun AddSpendingDialog(onDismiss: () -> Unit, onAdd: (Float) -> Unit) {
-    var rawInput by remember { mutableStateOf("") } // giá trị thô để convert sang Float
-    var displayInput by remember { mutableStateOf("") } // giá trị hiển thị format
-
-    fun formatNumber(value: String): String {
-        return try {
-            val number = value.toFloat()
-            NumberFormat.getNumberInstance(Locale.US).format(number.toInt())
-        } catch (e: Exception) {
-            ""
+fun SpendingItem(spending: Spending) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                "${NumberFormat.getNumberInstance(Locale.US).format(spending.amount.toInt())} VND",
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+            Text("Danh mục: ${spending.category}", color = Color.Gray, fontSize = 13.sp)
+            if (spending.note.isNotEmpty()) {
+                Text("Ghi chú: ${spending.note}", color = Color.Gray, fontSize = 13.sp)
+            }
         }
     }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                val amount = rawInput.toFloatOrNull()
-                if (amount != null && amount > 0f) onAdd(amount)
-            }) { Text("Thêm") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Hủy") } },
-        title = { Text("Thêm giao dịch") },
-        text = {
-            OutlinedTextField(
-                value = displayInput,
-                onValueChange = { input ->
-                    // Chỉ giữ các ký tự số
-                    rawInput = input.filter { it.isDigit() }
-                    displayInput = formatNumber(rawInput)
-                },
-                label = { Text("Số tiền (VND)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-        },
-        containerColor = Color(0xFF1E1E1E),
-        titleContentColor = Color.White,
-        textContentColor = Color.White
-    )
 }

@@ -1,6 +1,5 @@
 package com.example.moneyfy.ui.screens.more
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,7 +15,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun MoreScreen(onSettingsClick: () -> Unit) {
+fun MoreScreen(
+    onSettingsClick: () -> Unit,
+    onInvestmentClick: () -> Unit,
+    onPlanningClick: () -> Unit       // ⭐ BỔ SUNG
+) {
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -24,6 +28,7 @@ fun MoreScreen(onSettingsClick: () -> Unit) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+
         Text(
             text = "Thêm",
             color = Color.White,
@@ -32,9 +37,12 @@ fun MoreScreen(onSettingsClick: () -> Unit) {
         )
 
         val items = listOf(
-            "Bản ghi chép", "Lập kế hoạch",
-            "Đầu tư", "Theo dõi chi tiêu",
-            "Cài đặt", "Trợ giúp"
+            "Bản ghi chép",
+            "Lập kế hoạch",
+            "Đầu tư",
+            "Theo dõi chi tiêu",
+            "Cài đặt",
+            "Trợ giúp"
         )
 
         for (row in items.chunked(2)) {
@@ -49,8 +57,10 @@ fun MoreScreen(onSettingsClick: () -> Unit) {
                             .weight(1f)
                             .height(100.dp),
                         onClick = {
-                            if (title == "Cài đặt") {
-                                onSettingsClick()
+                            when (title) {
+                                "Cài đặt" -> onSettingsClick()
+                                "Đầu tư" -> onInvestmentClick()
+                                "Lập kế hoạch" -> onPlanningClick()     // ⭐ THÊM
                             }
                         }
                     )

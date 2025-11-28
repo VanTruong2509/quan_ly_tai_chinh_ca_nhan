@@ -5,11 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.runtime.mutableStateListOf
 import com.example.moneyfy.data.DataStoreManager
+import com.example.moneyfy.data.model.Spending
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-
-data class Spending(val amount: Float)
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -32,12 +31,14 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun addSpending(amount: Float) {
+    // Thêm chi tiêu, lưu category và note
+    fun addSpending(amount: Float, category: String = "Khác", note: String = "") {
         if (amount <= 0f) return
-        _spendings.add(Spending(amount))
+        _spendings.add(Spending(amount, category, note))
         val newTotal = _totalMoney.value - amount
         _totalMoney.value = newTotal
 
+        // Lưu lại tổng tiền vào DataStore
         viewModelScope.launch {
             dataStore.saveTotalMoney(newTotal)
         }
