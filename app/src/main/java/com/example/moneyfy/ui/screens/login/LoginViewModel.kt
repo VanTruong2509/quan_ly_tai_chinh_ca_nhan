@@ -13,8 +13,6 @@ class LoginViewModel(private val userDao: UserDao) : ViewModel() {
     val email = mutableStateOf("")
     val password = mutableStateOf("")
     val errorMessage = mutableStateOf("")
-    val otpCode = mutableStateOf("")
-    var phoneNumber = ""
 
     // Đăng ký user mới
     fun register(onSuccess: () -> Unit) {
@@ -30,9 +28,7 @@ class LoginViewModel(private val userDao: UserDao) : ViewModel() {
                 return@launch
             }
 
-            userDao.insertUser(
-                User(username = username.value, email = email.value, password = password.value)
-            )
+            userDao.insertUser(User(username = username.value, email = email.value, password = password.value))
             errorMessage.value = ""
             onSuccess()
         }
@@ -52,39 +48,32 @@ class LoginViewModel(private val userDao: UserDao) : ViewModel() {
         }
     }
 
-    // Gửi OTP (fake)
-    fun sendOtp(phone: String, onResult: (Boolean) -> Unit) {
+    // Gửi OTP (demo) để reset password
+    fun sendOtpToEmail(email: String, onResult: (Boolean, String, String?) -> Unit) {
         viewModelScope.launch {
-            if (phone.isBlank()) {
-                errorMessage.value = "Vui lòng nhập số điện thoại!"
-                onResult(false)
-                return@launch
+            val user = userDao.getUserByEmail(email)
+            if (user != null) {
+                // Sinh OTP giả lập
+                val otp = (100000..999999).random().toString()
+                // Trả về OTP luôn (offline, demo)
+                onResult(true, "OTP đã được tạo (demo): $otp", otp)
+            } else {
+                onResult(false, "Email không tồn tại", null)
             }
-
-            val otp = (100000..999999).random().toString()
-            otpCode.value = otp
-            phoneNumber = phone
-
-            onResult(true)
         }
     }
 
-    // Kiểm tra OTP
-    fun verifyOtp(input: String): Boolean {
-        return input == otpCode.value
-    }
 
     // Cập nhật mật khẩu mới
-    fun resetPassword(email: String, newPassword: String, onResult: (Boolean) -> Unit) {
+    fun updatePassword(email: String, newPassword: String, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch {
-            if (newPassword.isBlank()) {
-                errorMessage.value = "Mật khẩu mới không được để trống!"
-                onResult(false)
-                return@launch
+            val user = userDao.getUserByEmail(email)
+            if (user != null) {
+                userDao.updateUserPassword(email, newPassword)
+                onResult(true, "Cập nhật mật khẩu thành công")
+            } else {
+                onResult(false, "Email không tồn tại")
             }
-
-            userDao.updatePassword(email, newPassword)
-            onResult(true)
         }
     }
 }
