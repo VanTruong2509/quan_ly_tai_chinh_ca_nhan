@@ -37,35 +37,18 @@ fun AppNavHost() {
         viewModel(factory = LoginViewModelFactory(userDao))
 
     NavHost(navController = navController, startDestination = "login") {
-
-        // --- Login / Register ---
+        // --- Login / Register / SignIn ---
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController, sharedLoginViewModel) }
         composable("signin") { SignInScreen(navController, sharedLoginViewModel) }
 
-        // --- Forgot Password Flow ---
-        composable("forgot_password") {
-            ForgotPasswordScreen(navController)
-        }
-
-        composable(
-            route = "verify_otp/{phone}",
-            arguments = listOf(navArgument("phone") {
-                type = androidx.navigation.NavType.StringType
-            })
-        ) { backStackEntry ->
-            val phone = backStackEntry.arguments?.getString("phone") ?: ""
-            VerifyOtpScreen(navController, phone)
-        }
-
-        composable("reset_password") {
-            ResetPasswordScreen(navController)
-        }
+        // --- Forgot Password ---
+        composable("forgot_password") { ForgotPasswordScreen(navController, sharedLoginViewModel) }
 
         // --- Main Navigation ---
         composable("main") { MainNavigation(navController) }
 
-        // --- AddExpense (truyền HomeViewModel) ---
+        // --- AddExpense với query category ---
         composable(
             route = "add_expense?category={category}",
             arguments = listOf(navArgument("category") {
@@ -74,15 +57,9 @@ fun AppNavHost() {
                 nullable = true
             })
         ) { backStackEntry ->
-
             val category = backStackEntry.arguments?.getString("category")
-            val homeViewModel: HomeViewModel = viewModel()
-
-            AddExpenseScreen(
-                navController = navController,
-                homeViewModel = homeViewModel,
-                selectedCategory = category
-            )
+            val homeViewModel: HomeViewModel = viewModel() // shared ViewModel
+            AddExpenseScreen(navController, homeViewModel, selectedCategory = category)
         }
 
         // --- Category List ---
@@ -103,11 +80,11 @@ fun AppNavHost() {
     }
 }
 
-
+// --- Main Navigation ---
 @Composable
 fun MainNavigation(rootNavController: NavHostController) {
     val innerNavController = rememberNavController()
-    val homeViewModel: HomeViewModel = viewModel() // Shared across screens
+    val homeViewModel: HomeViewModel = viewModel()
 
     Scaffold(
         bottomBar = { BottomNavigationBar(innerNavController) },
@@ -123,7 +100,6 @@ fun MainNavigation(rootNavController: NavHostController) {
             composable("statistics") { StatsScreen(innerNavController) }
             composable("balance") { BalanceScreen(innerNavController) }
 
-            // --- More ---
             composable("more") {
                 MoreScreen(
                     onSettingsClick = { innerNavController.navigate("settings") },
@@ -132,23 +108,19 @@ fun MainNavigation(rootNavController: NavHostController) {
                 )
             }
 
-            // --- Settings ---
             composable("settings") {
                 SettingsScreen(
+                    navController = rootNavController, // <--- dùng rootNavController để quay về login
                     onBackClick = { innerNavController.popBackStack() },
                     onItemClick = { println("Clicked: $it") }
                 )
             }
 
-            // --- Notification ---
+
             composable("notification") { NotificationScreen(onBackClick = { innerNavController.popBackStack() }) }
 
-            // --- Add Transaction ---
-            composable("add_transaction") {
-                AddTransactionScreen(innerNavController)
-            }
+            composable("add_transaction") { AddTransactionScreen(innerNavController) }
 
-            // --- AddExpense với category query ---
             composable(
                 route = "add_expense?category={category}",
                 arguments = listOf(navArgument("category") {
@@ -158,17 +130,11 @@ fun MainNavigation(rootNavController: NavHostController) {
                 })
             ) { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category")
-                AddExpenseScreen(
-                    navController = innerNavController,
-                    homeViewModel = homeViewModel,
-                    selectedCategory = category
-                )
+                AddExpenseScreen(innerNavController, homeViewModel, selectedCategory = category)
             }
 
-            // --- Category List ---
             composable("category_list") { CategoryListScreen(innerNavController) }
 
-            // --- Sub Category ---
             composable(
                 "sub_category/{id}/{name}",
                 arguments = listOf(
@@ -181,18 +147,14 @@ fun MainNavigation(rootNavController: NavHostController) {
                 SubCategoryScreen(innerNavController, catId, catName)
             }
 
-            // --- Investment ---
             composable("investment") { InvestmentScreen(onBack = { innerNavController.popBackStack() }) }
-
-            // --- Planning ---
             composable("planning") { PlanningScreen(onBack = { innerNavController.popBackStack() }) }
-
-            // --- Create Account ---
             composable("create_account") { CreateAccountScreen(onBack = { innerNavController.popBackStack() }) }
         }
     }
 }
 
+// --- Bottom Navigation ---
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
