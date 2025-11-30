@@ -98,11 +98,13 @@ fun AddTransactionScreen(navController: NavController) {
         )
 
         FormItem(
-            label = "VND",
+            label = "VNĐ",
             value = amount,
             icon = Icons.Default.AttachMoney,
-            onClick = { }
+            isAmount = true,
+            onValueChange = { amount = it }
         )
+
 
         // ⭐ FormItem ngày giờ, hiển thị thời gian hiện tại
         FormItem(

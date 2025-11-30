@@ -23,11 +23,11 @@ import androidx.navigation.NavController
 @Composable
 fun SignInScreen(navController: NavController, viewModel: LoginViewModel) {
     val gradient = Brush.verticalGradient(listOf(Color(0xFF0086FF), Color.Black))
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
 
-    // 🔥 State để bật / tắt hiện mật khẩu
     var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
@@ -38,6 +38,7 @@ fun SignInScreen(navController: NavController, viewModel: LoginViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+
         Text(
             text = "Đăng nhập",
             color = Color.White,
@@ -53,9 +54,9 @@ fun SignInScreen(navController: NavController, viewModel: LoginViewModel) {
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
+
         Spacer(Modifier.height(12.dp))
 
-        // 🔥 TextField mật khẩu có icon con mắt
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -65,14 +66,22 @@ fun SignInScreen(navController: NavController, viewModel: LoginViewModel) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val icon =
+                    if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = "Toggle password visibility"
-                    )
+                    Icon(imageVector = icon, contentDescription = "Toggle password visibility")
                 }
             }
+        )
+
+        Text(
+            text = "Quên mật khẩu?",
+            color = Color.White,
+            fontSize = 14.sp,
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(top = 8.dp)
+                .clickable { navController.navigate("forgot_password") }
         )
 
         Spacer(Modifier.height(16.dp))
@@ -98,10 +107,10 @@ fun SignInScreen(navController: NavController, viewModel: LoginViewModel) {
 
         if (message.isNotBlank()) {
             Spacer(Modifier.height(16.dp))
-            Text(text = message, color = Color.Red, modifier = Modifier.fillMaxWidth())
+            Text(message, color = Color.Red)
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         Text(
             text = "Đăng ký",

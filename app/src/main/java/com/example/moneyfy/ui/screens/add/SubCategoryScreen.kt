@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,7 +24,7 @@ fun SubCategoryScreen(
     categoryId: Int,
     categoryName: String
 ) {
-    // icon theo danh mục chính
+    // Icon cho danh mục chính
     val mainIcon: ImageVector = when (categoryId) {
         1 -> Icons.Default.Restaurant
         2 -> Icons.Default.ShoppingBag
@@ -33,7 +33,7 @@ fun SubCategoryScreen(
         else -> Icons.Default.Category
     }
 
-    // icon cho subcategory
+    // Icon cho subcategory
     fun subIcon(index: Int): ImageVector {
         return when (index) {
             0 -> Icons.Default.CheckCircle
@@ -44,7 +44,7 @@ fun SubCategoryScreen(
     }
 
     val subCategories = when (categoryId) {
-        1 -> listOf( "Thực phẩm", "Nhà hàng, đồ ăn nhanh", "Quán bar, quán cà phê")
+        1 -> listOf("Thực phẩm", "Nhà hàng, đồ ăn nhanh", "Quán bar, quán cà phê")
         2 -> listOf("Quần áo", "Phụ kiện", "Mỹ phẩm")
         3 -> listOf("Tiền nhà", "Điện nước", "Internet")
         else -> listOf("Khác 1", "Khác 2")
@@ -83,7 +83,7 @@ fun SubCategoryScreen(
 
         Spacer(Modifier.height(10.dp))
 
-        // ===== Ô DANH MỤC CHÍNH =====
+        // ===== DANH MỤC CHÍNH =====
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -92,9 +92,7 @@ fun SubCategoryScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(mainIcon, contentDescription = null, tint = Color.White)
-
             Spacer(Modifier.width(10.dp))
-
             Text(categoryName, color = Color.White, fontSize = 18.sp)
         }
 
@@ -114,11 +112,14 @@ fun SubCategoryScreen(
         LazyColumn {
             items(subCategories.size) { index ->
 
+                val subCategoryName = subCategories[index]
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            navController.navigate("add_expense?category=${subCategories[index]}") {
+                            // Navigate về AddExpenseScreen với category được chọn
+                            navController.navigate("add_expense?category=$subCategoryName") {
                                 popUpTo("add_expense") { inclusive = true }
                             }
                         }
@@ -127,7 +128,7 @@ fun SubCategoryScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        subIcon(index),                      // icon phụ
+                        subIcon(index),
                         contentDescription = null,
                         tint = Color.White
                     )
@@ -135,13 +136,13 @@ fun SubCategoryScreen(
                     Spacer(Modifier.width(10.dp))
 
                     Text(
-                        subCategories[index],
+                        subCategoryName,
                         color = Color.White,
                         fontSize = 16.sp
                     )
                 }
+                Spacer(modifier = Modifier.height(10.dp))
             }
         }
     }
 }
-

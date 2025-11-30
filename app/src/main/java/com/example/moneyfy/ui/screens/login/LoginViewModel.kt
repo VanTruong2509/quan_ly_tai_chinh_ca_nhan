@@ -13,6 +13,8 @@ class LoginViewModel(private val userDao: UserDao) : ViewModel() {
     val email = mutableStateOf("")
     val password = mutableStateOf("")
     val errorMessage = mutableStateOf("")
+    val otpCode = mutableStateOf("")
+    var phoneNumber = ""
 
     // Đăng ký user mới
     fun register(onSuccess: () -> Unit) {
@@ -28,7 +30,9 @@ class LoginViewModel(private val userDao: UserDao) : ViewModel() {
                 return@launch
             }
 
-            userDao.insertUser(User(username = username.value, email = email.value, password = password.value))
+            userDao.insertUser(
+                User(username = username.value, email = email.value, password = password.value)
+            )
             errorMessage.value = ""
             onSuccess()
         }
@@ -45,6 +49,42 @@ class LoginViewModel(private val userDao: UserDao) : ViewModel() {
                 errorMessage.value = "Sai email hoặc mật khẩu!"
                 onResult(false)
             }
+        }
+    }
+
+    // Gửi OTP (fake)
+    fun sendOtp(phone: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            if (phone.isBlank()) {
+                errorMessage.value = "Vui lòng nhập số điện thoại!"
+                onResult(false)
+                return@launch
+            }
+
+            val otp = (100000..999999).random().toString()
+            otpCode.value = otp
+            phoneNumber = phone
+
+            onResult(true)
+        }
+    }
+
+    // Kiểm tra OTP
+    fun verifyOtp(input: String): Boolean {
+        return input == otpCode.value
+    }
+
+    // Cập nhật mật khẩu mới
+    fun resetPassword(email: String, newPassword: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            if (newPassword.isBlank()) {
+                errorMessage.value = "Mật khẩu mới không được để trống!"
+                onResult(false)
+                return@launch
+            }
+
+            userDao.updatePassword(email, newPassword)
+            onResult(true)
         }
     }
 }

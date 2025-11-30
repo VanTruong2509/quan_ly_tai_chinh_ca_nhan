@@ -36,7 +36,19 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    // ✅ Thêm đây để fix warning META-INF
+    packaging {
+        resources {
+            excludes += listOf(
+                "META-INF/NOTICE.md",
+                "META-INF/LICENSE.md",
+                "META-INF/DEPENDENCIES"
+            )
+        }
+    }
 }
+
 
 dependencies {
     // Core
@@ -87,4 +99,10 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.6.0")
     implementation("androidx.compose.foundation:foundation:1.6.0")
+
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.8")
+
+    implementation("com.sun.mail:android-mail:1.6.7")
+    implementation("com.sun.mail:android-activation:1.6.7")
+
 }

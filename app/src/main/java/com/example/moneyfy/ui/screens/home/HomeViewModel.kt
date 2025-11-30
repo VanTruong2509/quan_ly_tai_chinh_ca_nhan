@@ -14,16 +14,13 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     private val dataStore = DataStoreManager(app)
 
-    // Tổng tiền
     private val _totalMoney = MutableStateFlow(0f)
     val totalMoney: StateFlow<Float> = _totalMoney
 
-    // Danh sách chi tiêu
     private val _spendings = mutableStateListOf<Spending>()
     val spendings: List<Spending> get() = _spendings
 
     init {
-        // Load tổng tiền từ DataStore
         viewModelScope.launch {
             dataStore.totalMoney.collect { value ->
                 _totalMoney.value = value
@@ -31,20 +28,26 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    // Thêm chi tiêu, lưu category và note
+    // Chi tiêu
     fun addSpending(amount: Float, category: String = "Khác", note: String = "") {
         if (amount <= 0f) return
         _spendings.add(Spending(amount, category, note))
         val newTotal = _totalMoney.value - amount
         _totalMoney.value = newTotal
 
-        // Lưu lại tổng tiền vào DataStore
-        viewModelScope.launch {
-            dataStore.saveTotalMoney(newTotal)
-        }
+        viewModelScope.launch { dataStore.saveTotalMoney(newTotal) }
     }
 
-    // Lấy 7 chi tiêu gần nhất để vẽ biểu đồ tuần
+    // Thu nhập
+    fun addIncome(amount: Float, category: String = "Thu nhập", note: String = "") {
+        if (amount <= 0f) return
+        _spendings.add(Spending(-amount, category, note)) // negative để phân biệt thu nhập
+        val newTotal = _totalMoney.value + amount
+        _totalMoney.value = newTotal
+
+        viewModelScope.launch { dataStore.saveTotalMoney(newTotal) }
+    }
+
     fun getWeeklySpending(): List<Spending> {
         return _spendings.takeLast(7)
     }

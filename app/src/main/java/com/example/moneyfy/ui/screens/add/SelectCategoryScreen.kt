@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material.icons.filled.Search
 
-
 @Composable
 fun CategoryListScreen(navController: NavController) {
 
@@ -73,7 +72,6 @@ fun CategoryListScreen(navController: NavController) {
             ),
             shape = RoundedCornerShape(50.dp)
         )
-
 
         Spacer(Modifier.height(20.dp))
 
