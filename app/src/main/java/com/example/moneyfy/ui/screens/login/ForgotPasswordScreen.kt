@@ -4,181 +4,89 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
-// Gradient và màu button đồng bộ với SignIn
-val signInGradient = Brush.verticalGradient(listOf(Color(0xFF0086FF), Color.Black))
-val signInButtonColor = Color(0xFF00C853)
-
-// -------------------------------
-// 1) MÀN HÌNH QUÊN MẬT KHẨU
-// -------------------------------
 @Composable
-fun ForgotPasswordScreen(navController: NavController) {
-    var phone by remember { mutableStateOf("") }
+fun ForgotPasswordScreen(navController: NavController, viewModel: LoginViewModel) {
+    var email by remember { mutableStateOf("") }
+    var otpInput by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf("") }
+    var otpSent by remember { mutableStateOf(false) }
+    var generatedOtp by remember { mutableStateOf("") }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(signInGradient),
-        contentAlignment = Alignment.Center
+            .background(Color(0xFF0086FF))
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            modifier = Modifier
-                .padding(24.dp)
-                .background(Color.White, shape = MaterialTheme.shapes.medium)
-                .padding(20.dp)
-        ) {
-            Text(
-                text = "Quên mật khẩu",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.Black
-            )
+        Text("Quên mật khẩu", fontSize = 28.sp, color = Color.White)
 
-            Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
+        if (!otpSent) {
             OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = { Text("Số điện thoại") },
-                leadingIcon = { Icon(Icons.Default.Phone, contentDescription = "Phone") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth()
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Nhập email của bạn", color = Color.White) },
+                singleLine = true,
+                textStyle = TextStyle(color = Color.White),
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = { navController.navigate("verify_otp/$phone") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = signInButtonColor)
+                onClick = {
+                    if (email.isBlank()) {
+                        message = "Vui lòng nhập email"
+                        return@Button
+                    }
+                    viewModel.sendOtpToEmail(email) { success, msg, otp ->
+                        message = msg
+                        if (success && otp != null) {
+                            otpSent = true
+                            generatedOtp = otp
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C853))
             ) {
-                Text("Gửi mã OTP", color = Color.White)
+                Text("Tạo OTP", color = Color.White)
             }
-        }
-    }
-}
-
-// -------------------------------
-// 2) MÀN HÌNH XÁC THỰC OTP
-// -------------------------------
-@Composable
-fun VerifyOtpScreen(navController: NavController, phone: String) {
-    var otp by remember { mutableStateOf("") }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(signInGradient),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(24.dp)
-                .background(Color.White, shape = MaterialTheme.shapes.medium)
-                .padding(20.dp)
-        ) {
-            Text(
-                text = "Nhập mã OTP",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.Black
+        } else {
+            OutlinedTextField(
+                value = otpInput,
+                onValueChange = { otpInput = it },
+                label = { Text("Nhập OTP", color = Color.White) },
+                singleLine = true,
+                textStyle = TextStyle(color = Color.White),
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             Spacer(Modifier.height(8.dp))
-            Text(text = "Mã OTP đã gửi đến: $phone", color = Color.Gray)
-
-            Spacer(Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = otp,
-                onValueChange = { otp = it },
-                label = { Text("OTP") },
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "OTP") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = { navController.navigate("reset_password") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = signInButtonColor)
-            ) {
-                Text("Xác thực", color = Color.White)
-            }
-        }
-    }
-}
-
-// -------------------------------
-// 3) MÀN HÌNH ĐẶT LẠI MẬT KHẨU
-// -------------------------------
-@Composable
-fun ResetPasswordScreen(navController: NavController) {
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(signInGradient),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(24.dp)
-                .background(Color.White, shape = MaterialTheme.shapes.medium)
-                .padding(20.dp)
-        ) {
-            Text(
-                text = "Đặt lại mật khẩu",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.Black
-            )
-
-            Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = newPassword,
                 onValueChange = { newPassword = it },
-                label = { Text("Mật khẩu mới") },
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password") },
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                label = { Text("Nhập lại mật khẩu") },
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Confirm Password") },
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                label = { Text("Mật khẩu mới", color = Color.White) },
+                singleLine = true,
+                textStyle = TextStyle(color = Color.White),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -186,17 +94,50 @@ fun ResetPasswordScreen(navController: NavController) {
 
             Button(
                 onClick = {
-                    navController.navigate("login") {
-                        popUpTo("login") { inclusive = true }
+                    if (otpInput != generatedOtp) {
+                        message = "OTP không đúng"
+                        return@Button
+                    }
+                    if (newPassword.isBlank()) {
+                        message = "Vui lòng nhập mật khẩu mới"
+                        return@Button
+                    }
+                    viewModel.updatePassword(email, newPassword) { success, msg ->
+                        message = msg
+                        if (success) {
+                            otpSent = false
+                            email = ""
+                            otpInput = ""
+                            newPassword = ""
+
+                            navController.navigate("login") {
+                                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = signInButtonColor)
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C853))
             ) {
-                Text("Xác nhận đổi mật khẩu", color = Color.White)
+                Text("Cập nhật mật khẩu", color = Color.White)
             }
         }
+
+        if (message.isNotBlank()) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                message,
+                color = if (message.contains("không") || message.contains("OTP")) Color.Red else Color.Green
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            text = "Quay lại đăng nhập",
+            color = Color.White,
+            modifier = Modifier.clickable { navController.popBackStack() }
+        )
     }
 }
