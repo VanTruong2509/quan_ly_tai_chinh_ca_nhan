@@ -33,6 +33,7 @@ fun AddExpenseScreen(
     var category by remember { mutableStateOf(selectedCategory ?: "Danh mục") }
 
     var currentDateTime by remember { mutableStateOf(getCurrentDateTime()) }
+    var isExpense by remember { mutableStateOf(true) } // true = Chi tiêu, false = Thu nhập
 
     // Cập nhật thời gian tự động mỗi giây
     LaunchedEffect(Unit) {
@@ -75,13 +76,17 @@ fun AddExpenseScreen(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Button(
-                onClick = { /* xử lý nếu muốn */ },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                onClick = { isExpense = true },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isExpense) Color.Red else Color.DarkGray
+                )
             ) { Text("Chi tiêu") }
 
             Button(
-                onClick = { /* xử lý nếu muốn */ },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
+                onClick = { isExpense = false },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (!isExpense) Color.Green else Color.DarkGray
+                )
             ) { Text("Thu nhập") }
         }
 
@@ -125,19 +130,27 @@ fun AddExpenseScreen(
             onClick = {
                 val amt = amount.toFloatOrNull() ?: 0f
                 if (amt > 0f) {
-                    homeViewModel.addSpending(
-                        amount = amt,
-                        category = category,
-                        note = note
-                    )
+                    if (isExpense) {
+                        homeViewModel.addSpending(
+                            amount = amt,
+                            category = category,
+                            note = note
+                        )
+                    } else {
+                        homeViewModel.addIncome(
+                            amount = amt,
+                            category = category,
+                            note = note
+                        )
+                    }
+                    navController.popBackStack("home", inclusive = false)
                 }
-                navController.popBackStack("home", inclusive = false)
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(55.dp),
             shape = RoundedCornerShape(40.dp),
-            colors = ButtonDefaults.buttonColors(Color(0xFF8A2BE2))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A2BE2))
         ) {
             Text("Lưu", fontSize = 20.sp, color = Color.White)
         }
