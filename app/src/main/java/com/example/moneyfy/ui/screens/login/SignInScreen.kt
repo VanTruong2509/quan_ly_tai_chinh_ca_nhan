@@ -74,6 +74,7 @@ fun SignInScreen(navController: NavController, viewModel: LoginViewModel) {
             }
         )
 
+        // 👉 Quên mật khẩu
         Text(
             text = "Quên mật khẩu?",
             color = Color.White,
@@ -81,7 +82,9 @@ fun SignInScreen(navController: NavController, viewModel: LoginViewModel) {
             modifier = Modifier
                 .align(Alignment.End)
                 .padding(top = 8.dp)
-                .clickable { navController.navigate("forgot_password") }
+                .clickable {
+                    navController.navigate("forgot_password")
+                }
         )
 
         Spacer(Modifier.height(16.dp))
