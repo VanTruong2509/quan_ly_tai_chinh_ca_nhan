@@ -11,7 +11,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -22,13 +21,24 @@ import androidx.navigation.NavController
 import com.example.moneyfy.data.model.Spending
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.runtime.Composable
 
+
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
     val totalMoney by viewModel.totalMoney.collectAsState()
     val spendings by viewModel.spendings.collectAsState()
     val weeklySpending by remember { derivedStateOf { viewModel.getWeeklySpending() } }
+
+    // Format tiền mặt
+    val cashDisplay = when {
+        totalMoney <= 0f -> "0đ"
+        totalMoney < 1000f -> "${totalMoney.toInt()} đ"
+        else -> "${NumberFormat.getNumberInstance().format(totalMoney.toInt())} đ"
+    }
 
     Scaffold(
         topBar = { HomeTopBar(navController) },
@@ -48,9 +58,10 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                 ) {
                     InfoCard(
                         title = "TIỀN MẶT",
-                        value = "${NumberFormat.getNumberInstance().format(totalMoney.toInt())} VND",
+                        value = cashDisplay,
                         modifier = Modifier.weight(1f)
                     )
+
                     InfoCard(
                         title = "Thêm tài khoản",
                         value = "+",
@@ -136,7 +147,7 @@ fun LineChart(spendings: List<Spending>) {
 
     val days = listOf("T2","T3","T4","T5","T6","T7","CN")
     val data = spendings.map { it.amount }
-    val maxAmount = data.maxOrNull()?.let { if(it<=0)1f else it } ?: 1f
+    val maxAmount = data.maxOrNull()?.let { if (it <= 0) 1f else it } ?: 1f
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Canvas(
@@ -147,23 +158,51 @@ fun LineChart(spendings: List<Spending>) {
         ) {
             val width = size.width
             val height = size.height
-            val step = if(data.size>1) width/(data.size-1) else width
+            val step = if (data.size > 1) width / (data.size - 1) else width
 
+            // vẽ đường ngang đáy
             drawLine(
-                color = Color.Gray.copy(alpha=0.3f),
+                color = Color.Gray.copy(alpha = 0.3f),
                 start = Offset(0f, height),
                 end = Offset(width, height),
                 strokeWidth = 2f
             )
 
+            // Paint text — dùng android.graphics nhưng KHÔNG import Color
+            val textPaint = android.graphics.Paint().apply {
+                color = android.graphics.Color.WHITE
+                textSize = 32f
+                textAlign = android.graphics.Paint.Align.CENTER
+                isAntiAlias = true
+            }
+
             data.forEachIndexed { index, amount ->
-                if(index>0){
-                    val prev = data[index-1]
+                val x = index * step
+                val y = height - (amount / maxAmount) * height
+
+                if (index > 0) {
                     drawLine(
                         color = Color(0xFF00C853),
-                        start = Offset((index-1)*step, height-(prev/maxAmount)*height),
-                        end = Offset(index*step, height-(amount/maxAmount)*height),
+                        start = Offset((index - 1) * step, height - (data[index - 1] / maxAmount) * height),
+                        end = Offset(x, y),
                         strokeWidth = 3f
+                    )
+                }
+
+                // vẽ điểm
+                drawCircle(
+                    color = Color.White,
+                    radius = 6f,
+                    center = Offset(x, y)
+                )
+
+                // vẽ số trên điểm
+                drawIntoCanvas { canvas ->
+                    canvas.nativeCanvas.drawText(
+                        amount.toInt().toString(),
+                        x,
+                        y - 10,
+                        textPaint
                     )
                 }
             }
@@ -175,13 +214,12 @@ fun LineChart(spendings: List<Spending>) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            days.forEach { day ->
-                Text(day, color = Color.Gray, fontSize = 12.sp)
+            days.forEach {
+                Text(it, color = Color.Gray, fontSize = 12.sp)
             }
         }
     }
 }
-
 @Composable
 fun SpendingItem(spending: Spending) {
     val isExpense = spending.amount >= 0
@@ -194,11 +232,11 @@ fun SpendingItem(spending: Spending) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 "${NumberFormat.getNumberInstance(Locale.US).format(displayAmount.toInt())} VND",
-                color = if(isExpense) Color.Red else Color.Green,
+                color = if (isExpense) Color.Red else Color.Green,
                 fontWeight = FontWeight.Bold
             )
             Text("Danh mục: ${spending.category}", color = Color.Gray, fontSize = 13.sp)
-            if(spending.note.isNotEmpty()){
+            if (spending.note.isNotEmpty()) {
                 Text("Ghi chú: ${spending.note}", color = Color.Gray, fontSize = 13.sp)
             }
         }
