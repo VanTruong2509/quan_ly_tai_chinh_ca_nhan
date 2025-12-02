@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -14,11 +15,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.moneyfy.data.model.Spending
 import java.text.NumberFormat
-import java.util.Locale
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun CalendarScreen(spendings: List<Spending>) {
@@ -32,7 +35,7 @@ fun CalendarScreen(spendings: List<Spending>) {
     calendar.set(Calendar.DAY_OF_MONTH, 1)
     val startDayOfWeek = (calendar.get(Calendar.DAY_OF_WEEK) + 6) % 7
 
-    // Tạo danh sách ngày
+    // Danh sách ngày có chừa ô trống
     val days = mutableListOf<String>()
     repeat(startDayOfWeek) { days.add("") }
     for (day in 1..maxDay) days.add(day.toString())
@@ -84,12 +87,11 @@ fun CalendarScreen(spendings: List<Spending>) {
                 val dayInt = dayStr.toIntOrNull()
                 val isFuture = dayInt != null && dayInt > today
 
-                // Xác định màu nền
                 val bgColor = when {
-                    dayInt == selectedDay -> Color(0xFF2979FF) // highlight ngày chọn
-                    dayInt == today -> Color(0xFF00C853)        // ngày hôm nay
-                    isFuture -> Color(0xFF555555)               // ngày tương lai mờ
-                    else -> Color(0xFF1E1E1E)                  // ngày bình thường
+                    dayInt == selectedDay -> Color(0xFF2979FF)
+                    dayInt == today -> Color(0xFF00C853)
+                    isFuture -> Color(0xFF555555)
+                    else -> Color(0xFF1E1E1E)
                 }
 
                 Box(
@@ -123,7 +125,7 @@ fun CalendarScreen(spendings: List<Spending>) {
 
         Spacer(Modifier.height(16.dp))
 
-        // Chi tiết chi tiêu
+        // KHU VỰC DANH SÁCH GIAO DỊCH — DÙNG LAZYCOLUMN
         selectedDay?.let { day ->
             val spendingsOfDay = spendings.filter {
                 val cal = Calendar.getInstance()
@@ -143,18 +145,34 @@ fun CalendarScreen(spendings: List<Spending>) {
                     "Chi tiêu ngày $day",
                     color = Color.White,
                     fontSize = 16.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.height(8.dp))
+
                 if (spendingsOfDay.isEmpty()) {
                     Text("Không có chi tiêu", color = Color.Gray)
                 } else {
-                    spendingsOfDay.forEach { s ->
-                        Text(
-                            "${s.category}: ${NumberFormat.getNumberInstance(Locale.US).format(s.amount.toInt())} đ ${if (s.note.isNotEmpty()) "- ${s.note}" else ""}",
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)    // cho phép kéo
+                    ) {
+                        items(spendingsOfDay.size) { index ->
+                            val s = spendingsOfDay[index]
+
+                            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                            val time = timeFormat.format(Date(s.timestamp))
+
+                            Text(
+                                "${time} - ${s.category}: ${
+                                    NumberFormat.getNumberInstance(Locale.US)
+                                        .format(s.amount.toInt())
+                                } đ ${if (s.note.isNotEmpty()) "- ${s.note}" else ""}",
+                                color = Color.Gray,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
                     }
                 }
             }
