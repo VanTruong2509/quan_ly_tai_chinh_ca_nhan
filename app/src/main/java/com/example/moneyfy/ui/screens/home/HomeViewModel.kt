@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+// --- Thông báo giả lập ---
+data class NotificationItem(val id: Int, val title: String, val content: String)
+
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     private val dataStore = DataStoreManager(app)
@@ -24,6 +27,11 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val _spendings = MutableStateFlow<List<Spending>>(emptyList())
     val spendings: StateFlow<List<Spending>> = _spendings
 
+    // --- Thông báo ---
+    private val _notifications = MutableStateFlow<List<NotificationItem>>(emptyList())
+    val notifications: StateFlow<List<NotificationItem>> = _notifications
+    private var nextNotificationId = 1
+
     init {
         // Load tổng tiền từ DataStore
         viewModelScope.launch {
@@ -36,6 +44,13 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _spendings.value = spendingDao.getAllSpendings()
         }
+
+        // Thêm thông báo giả lập mặc định (demo)
+        _notifications.value = listOf(
+            NotificationItem(nextNotificationId++, "Giao dịch thành công", "Bạn đã chi 200.000 VNĐ cho mua sắm."),
+            NotificationItem(nextNotificationId++, "Nhắc nhở", "Đặt mục tiêu tiết kiệm tháng này."),
+            NotificationItem(nextNotificationId++, "Đầu tư", "Cổ phiếu ABC đã tăng 5%.")
+        )
     }
 
     // Thêm chi tiêu
@@ -43,22 +58,16 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         if (amount <= 0f) return
 
         viewModelScope.launch {
-            val newSpending = Spending(
-                amount = amount,
-                category = category,
-                note = note
-            )
-
-            // Lưu vào database
+            val newSpending = Spending(amount = amount, category = category, note = note)
             spendingDao.insertSpending(newSpending)
-
-            // Load lại danh sách
             _spendings.value = spendingDao.getAllSpendings()
 
-            // Cập nhật tổng tiền
             val newTotal = _totalMoney.value - amount
             _totalMoney.value = newTotal
             dataStore.saveTotalMoney(newTotal)
+
+            // Thêm thông báo giả lập
+            addNotification("Chi tiêu", "Bạn đã chi $amount VNĐ cho $category.")
         }
     }
 
@@ -67,24 +76,29 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         if (amount <= 0f) return
 
         viewModelScope.launch {
-            val newSpending = Spending(
-                amount = -amount,   // âm = thu nhập
-                category = category,
-                note = note
-            )
-
-            spendingDao.insertSpending(newSpending)
-
+            val newIncome = Spending(amount = -amount, category = category, note = note)
+            spendingDao.insertSpending(newIncome)
             _spendings.value = spendingDao.getAllSpendings()
 
             val newTotal = _totalMoney.value + amount
             _totalMoney.value = newTotal
             dataStore.saveTotalMoney(newTotal)
+
+            // Thêm thông báo giả lập
+            addNotification("Thu nhập", "Bạn đã nhận $amount VNĐ từ $category.")
         }
     }
 
     // Lấy 7 giao dịch gần đây
-    fun getWeeklySpending(): List<Spending> {
-        return _spendings.value.takeLast(7)
+    fun getWeeklySpending(): List<Spending> = _spendings.value.takeLast(7)
+
+    // --- Thông báo ---
+    private fun addNotification(title: String, content: String) {
+        val newNotification = NotificationItem(nextNotificationId++, title, content)
+        _notifications.value = listOf(newNotification) + _notifications.value
+    }
+
+    fun removeNotification(id: Int) {
+        _notifications.value = _notifications.value.filter { it.id != id }
     }
 }
