@@ -11,6 +11,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBackIos
+import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,17 +30,25 @@ import java.util.*
 
 @Composable
 fun CalendarScreen(spendings: List<Spending>) {
-    val calendar = Calendar.getInstance()
-    val today = calendar.get(Calendar.DAY_OF_MONTH)
-    val currentMonth = calendar.get(Calendar.MONTH) + 1
-    val currentYear = calendar.get(Calendar.YEAR)
 
-    // Số ngày trong tháng
-    val maxDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+    // --- TRẠNG THÁI THÁNG VÀ NĂM ĐANG HIỂN THỊ ---
+    var currentMonth by remember { mutableStateOf(Calendar.getInstance().get(Calendar.MONTH) + 1) }
+    var currentYear by remember { mutableStateOf(Calendar.getInstance().get(Calendar.YEAR)) }
+
+    val today = Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+    val realMonth = Calendar.getInstance().get(Calendar.MONTH) + 1
+    val realYear = Calendar.getInstance().get(Calendar.YEAR)
+
+    // Calendar xử lý tháng/năm
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.YEAR, currentYear)
+    calendar.set(Calendar.MONTH, currentMonth - 1)
     calendar.set(Calendar.DAY_OF_MONTH, 1)
+
+    val maxDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
     val startDayOfWeek = (calendar.get(Calendar.DAY_OF_WEEK) + 6) % 7
 
-    // Danh sách ngày có chừa ô trống
+    // Tạo danh sách ngày
     val days = mutableListOf<String>()
     repeat(startDayOfWeek) { days.add("") }
     for (day in 1..maxDay) days.add(day.toString())
@@ -63,20 +76,57 @@ fun CalendarScreen(spendings: List<Spending>) {
             .background(Color(0xFF101010))
             .padding(16.dp)
     ) {
-        // Tiêu đề tháng
-        Text("Tháng $currentMonth, $currentYear", color = Color.White, fontSize = 24.sp)
+
+        // --- TIÊU ĐỀ THÁNG + NÚT LÙI / TIẾN ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            IconButton(onClick = {
+                currentMonth--
+                if (currentMonth < 1) {
+                    currentMonth = 12
+                    currentYear--
+                }
+                selectedDay = null
+            }) {
+                Icon(Icons.Default.ArrowBackIos, contentDescription = "Previous", tint = Color.White)
+            }
+
+            Text(
+                "Tháng $currentMonth, $currentYear",
+                color = Color.White,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            IconButton(onClick = {
+                currentMonth++
+                if (currentMonth > 12) {
+                    currentMonth = 1
+                    currentYear++
+                }
+                selectedDay = null
+            }) {
+                Icon(Icons.Default.ArrowForwardIos, contentDescription = "Next", tint = Color.White)
+            }
+        }
+
         Spacer(Modifier.height(12.dp))
 
         // Tên các ngày trong tuần
         val weekdays = listOf("CN", "T2", "T3", "T4", "T5", "T6", "T7")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             weekdays.forEach {
-                Text(it, color = Color.Gray, fontSize = 14.sp, modifier = Modifier.weight(1f), maxLines = 1)
+                Text(it, color = Color.Gray, fontSize = 14.sp, modifier = Modifier.weight(1f))
             }
         }
+
         Spacer(Modifier.height(8.dp))
 
-        // Lưới ngày
+        // --- Lưới ngày trong tháng ---
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
             modifier = Modifier.fillMaxWidth(),
@@ -85,12 +135,13 @@ fun CalendarScreen(spendings: List<Spending>) {
         ) {
             items(days) { dayStr ->
                 val dayInt = dayStr.toIntOrNull()
-                val isFuture = dayInt != null && dayInt > today
+
+                val isToday =
+                    dayInt != null && dayInt == today && currentMonth == realMonth && currentYear == realYear
 
                 val bgColor = when {
                     dayInt == selectedDay -> Color(0xFF2979FF)
-                    dayInt == today -> Color(0xFF00C853)
-                    isFuture -> Color(0xFF555555)
+                    isToday -> Color(0xFF00C853)
                     else -> Color(0xFF1E1E1E)
                 }
 
@@ -99,24 +150,20 @@ fun CalendarScreen(spendings: List<Spending>) {
                         .aspectRatio(1f)
                         .background(bgColor, shape = MaterialTheme.shapes.small)
                         .border(1.dp, Color.Gray, shape = MaterialTheme.shapes.small)
-                        .clickable(
-                            enabled = dayInt != null && !isFuture && dailySpending.containsKey(dayInt)
-                        ) {
+                        .clickable(enabled = dayInt != null && dailySpending.containsKey(dayInt)) {
                             selectedDay = if (selectedDay == dayInt) null else dayInt
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(dayStr, color = Color.White)
+
                         if (dayInt != null && dailySpending[dayInt] != null) {
                             Text(
-                                text = "${dailySpending[dayInt]!!.toInt()} đ",
+                                text = "${dailySpending[dayInt]!!.toInt()}đ",
                                 color = Color.Red,
                                 fontSize = 10.sp
                             )
-                        }
-                        if (isFuture) {
-                            Text("—", color = Color.Gray, fontSize = 10.sp)
                         }
                     }
                 }
@@ -125,7 +172,7 @@ fun CalendarScreen(spendings: List<Spending>) {
 
         Spacer(Modifier.height(16.dp))
 
-        // KHU VỰC DANH SÁCH GIAO DỊCH — DÙNG LAZYCOLUMN
+        // --- DANH SÁCH GIAO DỊCH CỦA NGÀY ĐƯỢC CHỌN ---
         selectedDay?.let { day ->
             val spendingsOfDay = spendings.filter {
                 val cal = Calendar.getInstance()
@@ -152,24 +199,20 @@ fun CalendarScreen(spendings: List<Spending>) {
                 if (spendingsOfDay.isEmpty()) {
                     Text("Không có chi tiêu", color = Color.Gray)
                 } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp)    // cho phép kéo
-                    ) {
+                    LazyColumn(modifier = Modifier.height(250.dp)) {
                         items(spendingsOfDay.size) { index ->
                             val s = spendingsOfDay[index]
 
-                            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                            val time = timeFormat.format(Date(s.timestamp))
+                            val time = SimpleDateFormat("HH:mm", Locale.getDefault())
+                                .format(Date(s.timestamp))
 
                             Text(
-                                "${time} - ${s.category}: ${
+                                "$time - ${s.category}: ${
                                     NumberFormat.getNumberInstance(Locale.US)
                                         .format(s.amount.toInt())
-                                } đ ${if (s.note.isNotEmpty()) "- ${s.note}" else ""}",
+                                } đ" +
+                                        if (s.note.isNotEmpty()) " - ${s.note}" else "",
                                 color = Color.Gray,
-                                fontSize = 14.sp,
                                 modifier = Modifier.padding(vertical = 4.dp)
                             )
                         }
