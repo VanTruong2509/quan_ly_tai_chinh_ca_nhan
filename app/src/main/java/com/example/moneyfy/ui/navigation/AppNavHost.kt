@@ -28,6 +28,7 @@ import com.example.moneyfy.ui.screens.setting.SettingsScreen
 import com.example.moneyfy.ui.screens.stats.StatsScreen
 import com.example.moneyfy.ui.screens.balance.BalanceScreen
 
+
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
@@ -109,13 +110,24 @@ fun MainNavigation(rootNavController: NavHostController) {
             }
 
             composable("settings") {
+                val context = LocalContext.current
+                val db = AppDatabase.getDatabase(context)
+                val userDao = db.userDao()
+
+                // lấy email người đang đăng nhập từ sharedPreferences / viewModel / argument
+                val currentEmail = "truong@gmail.com"
+
                 SettingsScreen(
-                    navController = rootNavController, // ← Lỗi ở đây
+                    currentLoggedInEmail = currentEmail,
+                    userDao = userDao,
                     onBackClick = { innerNavController.popBackStack() },
-                    onItemClick = { println("Clicked: $it") }
+                    onLogout = {
+                        rootNavController.navigate("login") {
+                            popUpTo(rootNavController.graph.startDestinationId) { inclusive = true }
+                        }
+                    }
                 )
             }
-
 
 
             composable("notification") {
