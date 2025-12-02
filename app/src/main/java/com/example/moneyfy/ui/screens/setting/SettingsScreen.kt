@@ -13,12 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 
 @Composable
 fun SettingsScreen(
-    navController: NavController,
-    onBackClick: () -> Unit, // callback khi bấm nút quay lại
+    navController: NavHostController, // cần để navigate
+    onBackClick: () -> Unit,          // callback khi bấm nút quay lại
     onItemClick: (String) -> Unit
 ) {
     val buttonList = listOf(
@@ -39,7 +39,7 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // 🔙 Thanh tiêu đề có nút quay lại
+        // 🔙 Thanh tiêu đề
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -48,19 +48,10 @@ fun SettingsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Quay lại",
-                    tint = Color.White
-                )
+                Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại", tint = Color.White)
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Cài đặt",
-                color = Color.White,
-                fontSize = 22.sp,
-                style = MaterialTheme.typography.titleLarge
-            )
+            Text("Cài đặt", color = Color.White, fontSize = 22.sp, style = MaterialTheme.typography.titleLarge)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -68,7 +59,17 @@ fun SettingsScreen(
         // Các nút chức năng
         buttonList.forEach { (text, icon, color) ->
             Button(
-                onClick = { onItemClick(text) },
+                onClick = {
+                    if (text == "Đăng xuất") {
+                        // Chuyển về LoginScreen và xóa toàn bộ back stack
+                        navController.navigate("login") {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    } else {
+                        onItemClick(text)
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = color),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -81,20 +82,10 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = text,
-                            tint = Color.White,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(text = text, color = Color.White)
+                        Icon(icon, contentDescription = text, tint = Color.White, modifier = Modifier.padding(end = 8.dp))
+                        Text(text, color = Color.White)
                     }
-                    Icon(
-                        imageVector = Icons.Default.ArrowForwardIos,
-                        contentDescription = "Mở",
-                        tint = Color.White,
-                        modifier = Modifier.size(14.dp)
-                    )
+                    Icon(Icons.Default.ArrowForwardIos, contentDescription = "Mở", tint = Color.White, modifier = Modifier.size(14.dp))
                 }
             }
         }
