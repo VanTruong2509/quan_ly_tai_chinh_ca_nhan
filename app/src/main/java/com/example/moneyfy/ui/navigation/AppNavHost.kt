@@ -96,8 +96,8 @@ fun MainNavigation(rootNavController: NavHostController) {
             modifier = Modifier.padding(padding)
         ) {
             composable("home") { HomeScreen(innerNavController, homeViewModel) }
-            composable("calendar") { CalendarScreen() }
-            composable("statistics") { StatsScreen(innerNavController) }
+            composable("calendar") { CalendarScreen(spendings = homeViewModel.spendings.collectAsState().value) }
+            composable("statistics") { StatsScreen(innerNavController, homeViewModel) }
             composable("balance") { BalanceScreen(innerNavController) }
 
             composable("more") {
