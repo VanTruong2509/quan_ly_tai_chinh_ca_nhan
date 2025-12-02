@@ -110,11 +110,12 @@ fun MainNavigation(rootNavController: NavHostController) {
 
             composable("settings") {
                 SettingsScreen(
-                    navController = rootNavController, // <--- dùng rootNavController để quay về login
+                    navController = rootNavController, // ← Lỗi ở đây
                     onBackClick = { innerNavController.popBackStack() },
                     onItemClick = { println("Clicked: $it") }
                 )
             }
+
 
 
             composable("notification") {
