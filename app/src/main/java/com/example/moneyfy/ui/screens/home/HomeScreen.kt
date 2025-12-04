@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -32,21 +29,14 @@ import java.util.Calendar
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
     val spendings by viewModel.spendings.collectAsState()
 
-    //  TUẦN HIỆN TẠI / TUẦN TRƯỚC / TUẦN SAU
     var weekOffset by remember { mutableStateOf(0) }
 
-    //  BIỂU ĐỒ THEO TUẦN
     val weeklySpending by remember {
-        derivedStateOf {
-            groupSpendingByWeek(spendings, weekOffset)
-        }
+        derivedStateOf { groupSpendingByWeek(spendings, weekOffset) }
     }
 
-    //  LỌC GIAO DỊCH THEO TUẦN ĐANG XEM
     val filteredSpendings by remember {
-        derivedStateOf {
-            filterSpendingsByWeek(spendings, weekOffset)
-        }
+        derivedStateOf { filterSpendingsByWeek(spendings, weekOffset) }
     }
 
     val totalSpent = spendings.filter { it.amount > 0f }.sumOf { it.amount.toDouble() }
@@ -73,11 +63,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    InfoCard(
-                        title = "TỔNG CHI",
-                        value = spentDisplay,
-                        modifier = Modifier.weight(1f)
-                    )
+                    InfoCard("TỔNG CHI", spentDisplay, Modifier.weight(1f))
 
                     InfoCard(
                         title = "Thêm tài khoản",
@@ -98,8 +84,6 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                         .padding(12.dp)
                 ) {
                     Column {
-
-                        //  THANH ĐIỀU HƯỚNG TUẦN + NGÀY THÁNG
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -110,17 +94,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                             }
 
                             Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                                Text(
-                                    text = getWeekTitle(weekOffset),
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                                Text(
-                                    text = getWeekDateRange(weekOffset),
-                                    color = Color.Gray,
-                                    fontSize = 12.sp
-                                )
+                                Text(getWeekTitle(weekOffset), color = Color.White, fontWeight = FontWeight.Bold)
+                                Text(getWeekDateRange(weekOffset), color = Color.Gray, fontSize = 12.sp)
                             }
 
                             IconButton(onClick = { weekOffset++ }) {
@@ -135,22 +110,109 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
             }
 
             item {
-                Text(
-                    "Giao dịch trong tuần",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
+                Text("Giao dịch trong tuần", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
             }
 
-            // ✅ CHỈ HIỂN THỊ GIAO DỊCH ĐÚNG TUẦN
             items(filteredSpendings.reversed()) { spending ->
-                SpendingItem(spending)
+                SpendingItem(spending = spending, viewModel = viewModel)
             }
         }
     }
 }
 
+@Composable
+fun SpendingItem(spending: Spending, viewModel: HomeViewModel) {
+    var showEdit by remember { mutableStateOf(false) }
+
+    val isExpense = spending.amount >= 0
+    val displayAmount = kotlin.math.abs(spending.amount)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { showEdit = true },
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                "${NumberFormat.getNumberInstance(Locale.US).format(displayAmount.toInt())} VND",
+                color = if (isExpense) Color.Red else Color.Green,
+                fontWeight = FontWeight.Bold
+            )
+            Text("Danh mục: ${spending.category}", color = Color.Gray, fontSize = 13.sp)
+            if (spending.note.isNotEmpty()) {
+                Text("Ghi chú: ${spending.note}", color = Color.Gray, fontSize = 13.sp)
+            }
+        }
+    }
+
+    if (showEdit) {
+        EditSpendingDialog(
+            spending = spending,
+            onDismiss = { showEdit = false },
+            onSave = { updated ->
+                viewModel.updateSpending(updated)
+            },
+            onDelete = {
+                viewModel.deleteSpending(spending)
+                showEdit = false
+            }
+        )
+    }
+}
+
+@Composable
+fun EditSpendingDialog(
+    spending: Spending,
+    onDismiss: () -> Unit,
+    onSave: (Spending) -> Unit,
+    onDelete: () -> Unit
+) {
+    var amount by remember { mutableStateOf(spending.amount.toString()) }
+    var category by remember { mutableStateOf(spending.category) }
+    var note by remember { mutableStateOf(spending.note) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Chỉnh sửa giao dịch") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    label = { Text("Số tiền") }
+                )
+                OutlinedTextField(
+                    value = category,
+                    onValueChange = { category = it },
+                    label = { Text("Danh mục") }
+                )
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Ghi chú") }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val updated = spending.copy(
+                    amount = amount.toFloatOrNull() ?: spending.amount,
+                    category = category,
+                    note = note
+                )
+                onSave(updated)
+                onDismiss()
+            }) { Text("Lưu") }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onDelete) { Text("Xoá") }
+                TextButton(onClick = onDismiss) { Text("Huỷ") }
+            }
+        }
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -245,52 +307,19 @@ fun BarChart(data: List<Float>) {
     }
 }
 
-@Composable
-fun SpendingItem(spending: Spending) {
-    val isExpense = spending.amount >= 0
-    val displayAmount = kotlin.math.abs(spending.amount)
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                "${NumberFormat.getNumberInstance(Locale.US).format(displayAmount.toInt())} VND",
-                color = if (isExpense) Color.Red else Color.Green,
-                fontWeight = FontWeight.Bold
-            )
-            Text("Danh mục: ${spending.category}", color = Color.Gray, fontSize = 13.sp)
-            if (spending.note.isNotEmpty()) {
-                Text("Ghi chú: ${spending.note}", color = Color.Gray, fontSize = 13.sp)
-            }
-        }
-    }
-}
-
-/*  GỘP TIỀN THEO TUẦN */
-fun groupSpendingByWeek(
-    spendings: List<Spending>,
-    weekOffset: Int
-): List<Float> {
-
+/* HÀM TIỆN ÍCH GỘP / LỌC THEO TUẦN */
+fun groupSpendingByWeek(spendings: List<Spending>, weekOffset: Int): List<Float> {
     val calendar = Calendar.getInstance()
     calendar.add(Calendar.WEEK_OF_YEAR, weekOffset)
-
     calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
     val startOfWeek = calendar.timeInMillis
-
     calendar.add(Calendar.DAY_OF_WEEK, 6)
     val endOfWeek = calendar.timeInMillis
 
     val dailyTotals = MutableList(7) { 0f }
-
     spendings.forEach { spending ->
-        if (spending.timestamp in startOfWeek..endOfWeek) {
-            val cal = Calendar.getInstance().apply {
-                timeInMillis = spending.timestamp
-            }
-
+        if (spending.timestamp in startOfWeek..endOfWeek && spending.amount > 0f) {
+            val cal = Calendar.getInstance().apply { timeInMillis = spending.timestamp }
             val dayIndex = when (cal.get(Calendar.DAY_OF_WEEK)) {
                 Calendar.MONDAY -> 0
                 Calendar.TUESDAY -> 1
@@ -301,33 +330,20 @@ fun groupSpendingByWeek(
                 Calendar.SUNDAY -> 6
                 else -> 0
             }
-
-            if (spending.amount > 0f) {
-                dailyTotals[dayIndex] += spending.amount
-            }
+            dailyTotals[dayIndex] += spending.amount
         }
     }
-
     return dailyTotals
 }
 
-/*  LỌC GIAO DỊCH THEO TUẦN */
-fun filterSpendingsByWeek(
-    spendings: List<Spending>,
-    weekOffset: Int
-): List<Spending> {
-
+fun filterSpendingsByWeek(spendings: List<Spending>, weekOffset: Int): List<Spending> {
     val calendar = Calendar.getInstance()
     calendar.add(Calendar.WEEK_OF_YEAR, weekOffset)
     calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
     val startOfWeek = calendar.timeInMillis
-
     calendar.add(Calendar.DAY_OF_WEEK, 6)
     val endOfWeek = calendar.timeInMillis
-
-    return spendings.filter {
-        it.timestamp in startOfWeek..endOfWeek
-    }
+    return spendings.filter { it.timestamp in startOfWeek..endOfWeek }
 }
 
 fun getWeekTitle(weekOffset: Int): String {
@@ -345,16 +361,10 @@ fun getWeekDateRange(weekOffset: Int): String {
 
     val startDay = cal.get(Calendar.DAY_OF_MONTH)
     val startMonth = cal.get(Calendar.MONTH) + 1
-
     cal.add(Calendar.DAY_OF_WEEK, 6)
-
     val endDay = cal.get(Calendar.DAY_OF_MONTH)
     val endMonth = cal.get(Calendar.MONTH) + 1
     val year = cal.get(Calendar.YEAR)
 
-    return "%02d/%02d - %02d/%02d/%d".format(
-        startDay, startMonth,
-        endDay, endMonth,
-        year
-    )
+    return "%02d/%02d - %02d/%02d/%d".format(startDay, startMonth, endDay, endMonth, year)
 }
