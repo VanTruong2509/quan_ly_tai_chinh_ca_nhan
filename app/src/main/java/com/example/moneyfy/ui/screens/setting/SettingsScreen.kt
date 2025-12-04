@@ -197,7 +197,7 @@ fun SettingsScreen(
                         val user = currentUser
                         if (inputOtp == otpCode && user != null) {
                             userDao.updateUserPassword(user.email, newPassword)
-                            snackbarHostState.showSnackbar("✅ Đổi mật khẩu thành công")
+                            snackbarHostState.showSnackbar(" Đổi mật khẩu thành công")
                             onLogout()
                         } else snackbarHostState.showSnackbar("❌ OTP sai")
                     }
@@ -209,7 +209,7 @@ fun SettingsScreen(
                 listOf("Tiếng Việt", "English", "日本語", "한국어").forEach {
                     Button(modifier = Modifier.fillMaxWidth().padding(6.dp), onClick = {
                         selectedLanguage = it
-                        scope.launch { snackbarHostState.showSnackbar("✅ Đã chọn $it") }
+                        scope.launch { snackbarHostState.showSnackbar(" Đã chọn $it") }
                     }) { Text(it) }
                 }
             }
@@ -219,7 +219,7 @@ fun SettingsScreen(
                 listOf("VND", "USD", "EUR", "JPY").forEach {
                     Button(modifier = Modifier.fillMaxWidth().padding(6.dp), onClick = {
                         selectedCurrency = it
-                        scope.launch { snackbarHostState.showSnackbar("✅ Đã chọn $it") }
+                        scope.launch { snackbarHostState.showSnackbar(" Đã chọn $it") }
                     }) { Text(it) }
                 }
             }
@@ -235,7 +235,7 @@ fun SettingsScreen(
 
                 Button(modifier = Modifier.fillMaxWidth(), onClick = {
                     scope.launch {
-                        snackbarHostState.showSnackbar("✅ Gửi phản hồi thành công")
+                        snackbarHostState.showSnackbar(" Gửi phản hồi thành công")
                         feedbackText = ""
                     }
                 }) { Text("Gửi phản hồi") }
@@ -258,7 +258,7 @@ fun SettingsScreen(
 
                 Button(modifier = Modifier.fillMaxWidth(), onClick = {
                     scope.launch {
-                        snackbarHostState.showSnackbar("✅ Cảm ơn bạn đã đánh giá $rating sao!")
+                        snackbarHostState.showSnackbar(" Cảm ơn bạn đã đánh giá $rating sao!")
                     }
                 }) { Text("Gửi đánh giá") }
             }
