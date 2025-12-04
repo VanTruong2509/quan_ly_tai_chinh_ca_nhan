@@ -35,9 +35,17 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
     // ✅ TUẦN HIỆN TẠI / TUẦN TRƯỚC / TUẦN SAU
     var weekOffset by remember { mutableStateOf(0) }
 
+    // ✅ BIỂU ĐỒ THEO TUẦN
     val weeklySpending by remember {
         derivedStateOf {
             groupSpendingByWeek(spendings, weekOffset)
+        }
+    }
+
+    // ✅ LỌC GIAO DỊCH THEO TUẦN ĐANG XEM
+    val filteredSpendings by remember {
+        derivedStateOf {
+            filterSpendingsByWeek(spendings, weekOffset)
         }
     }
 
@@ -109,7 +117,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                                 )
 
                                 Text(
-                                    text = getWeekDateRange(weekOffset), // ✅ NGÀY THÁNG TUẦN
+                                    text = getWeekDateRange(weekOffset),
                                     color = Color.Gray,
                                     fontSize = 12.sp
                                 )
@@ -128,19 +136,22 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
 
             item {
                 Text(
-                    "Giao dịch gần đây",
+                    "Giao dịch trong tuần",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
             }
 
-            items(spendings.reversed()) { spending ->
+            // ✅ CHỈ HIỂN THỊ GIAO DỊCH ĐÚNG TUẦN
+            items(filteredSpendings.reversed()) { spending ->
                 SpendingItem(spending)
             }
         }
     }
 }
+
+/* ================= GIỮ NGUYÊN TOÀN BỘ PHẦN DƯỚI ================= */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -258,7 +269,7 @@ fun SpendingItem(spending: Spending) {
     }
 }
 
-/* ✅ GỘP TIỀN THEO TUẦN + HỖ TRỢ TUẦN TRƯỚC / SAU */
+/* ✅ GỘP TIỀN THEO TUẦN */
 fun groupSpendingByWeek(
     spendings: List<Spending>,
     weekOffset: Int
@@ -301,7 +312,25 @@ fun groupSpendingByWeek(
     return dailyTotals
 }
 
-/* ✅ TÊN TUẦN */
+/* ✅ LỌC GIAO DỊCH THEO TUẦN */
+fun filterSpendingsByWeek(
+    spendings: List<Spending>,
+    weekOffset: Int
+): List<Spending> {
+
+    val calendar = Calendar.getInstance()
+    calendar.add(Calendar.WEEK_OF_YEAR, weekOffset)
+    calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+    val startOfWeek = calendar.timeInMillis
+
+    calendar.add(Calendar.DAY_OF_WEEK, 6)
+    val endOfWeek = calendar.timeInMillis
+
+    return spendings.filter {
+        it.timestamp in startOfWeek..endOfWeek
+    }
+}
+
 fun getWeekTitle(weekOffset: Int): String {
     return when {
         weekOffset == 0 -> "Tuần này"
@@ -310,7 +339,6 @@ fun getWeekTitle(weekOffset: Int): String {
     }
 }
 
-/* ✅ NGÀY THÁNG CỦA TUẦN */
 fun getWeekDateRange(weekOffset: Int): String {
     val cal = Calendar.getInstance()
     cal.add(Calendar.WEEK_OF_YEAR, weekOffset)
