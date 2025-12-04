@@ -32,17 +32,17 @@ import java.util.Calendar
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
     val spendings by viewModel.spendings.collectAsState()
 
-    // ✅ TUẦN HIỆN TẠI / TUẦN TRƯỚC / TUẦN SAU
+    //  TUẦN HIỆN TẠI / TUẦN TRƯỚC / TUẦN SAU
     var weekOffset by remember { mutableStateOf(0) }
 
-    // ✅ BIỂU ĐỒ THEO TUẦN
+    //  BIỂU ĐỒ THEO TUẦN
     val weeklySpending by remember {
         derivedStateOf {
             groupSpendingByWeek(spendings, weekOffset)
         }
     }
 
-    // ✅ LỌC GIAO DỊCH THEO TUẦN ĐANG XEM
+    //  LỌC GIAO DỊCH THEO TUẦN ĐANG XEM
     val filteredSpendings by remember {
         derivedStateOf {
             filterSpendingsByWeek(spendings, weekOffset)
@@ -99,7 +99,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                 ) {
                     Column {
 
-                        // ✅ THANH ĐIỀU HƯỚNG TUẦN + NGÀY THÁNG
+                        //  THANH ĐIỀU HƯỚNG TUẦN + NGÀY THÁNG
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -151,7 +151,6 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
     }
 }
 
-/* ================= GIỮ NGUYÊN TOÀN BỘ PHẦN DƯỚI ================= */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -269,7 +268,7 @@ fun SpendingItem(spending: Spending) {
     }
 }
 
-/* ✅ GỘP TIỀN THEO TUẦN */
+/*  GỘP TIỀN THEO TUẦN */
 fun groupSpendingByWeek(
     spendings: List<Spending>,
     weekOffset: Int
@@ -312,7 +311,7 @@ fun groupSpendingByWeek(
     return dailyTotals
 }
 
-/* ✅ LỌC GIAO DỊCH THEO TUẦN */
+/*  LỌC GIAO DỊCH THEO TUẦN */
 fun filterSpendingsByWeek(
     spendings: List<Spending>,
     weekOffset: Int
