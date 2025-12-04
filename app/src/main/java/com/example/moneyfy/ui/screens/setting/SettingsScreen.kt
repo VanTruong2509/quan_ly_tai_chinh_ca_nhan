@@ -31,8 +31,12 @@ fun SettingsScreen(
     var showChangePassword by remember { mutableStateOf(false) }
     var showOtp by remember { mutableStateOf(false) }
     var showLanguage by remember { mutableStateOf(false) }
+    var showCurrency by remember { mutableStateOf(false) }
+    var showFeedback by remember { mutableStateOf(false) }
+    var showRating by remember { mutableStateOf(false) }
 
     var selectedLanguage by remember { mutableStateOf("Tiếng Việt") }
+    var selectedCurrency by remember { mutableStateOf("VND") }
 
     var currentUser by remember { mutableStateOf<User?>(null) }
 
@@ -47,6 +51,9 @@ fun SettingsScreen(
     var otpCode by remember { mutableStateOf("") }
     var inputOtp by remember { mutableStateOf("") }
 
+    var feedbackText by remember { mutableStateOf("") }
+    var rating by remember { mutableStateOf(5) }
+
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -54,9 +61,7 @@ fun SettingsScreen(
         currentUser = userDao.getUserByEmail(currentLoggedInEmail)
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
 
         Column(
             modifier = Modifier
@@ -75,6 +80,9 @@ fun SettingsScreen(
                         showChangePassword -> showChangePassword = false
                         showOtp -> showOtp = false
                         showLanguage -> showLanguage = false
+                        showCurrency -> showCurrency = false
+                        showFeedback -> showFeedback = false
+                        showRating -> showRating = false
                         else -> onBackClick()
                     }
                 }) {
@@ -87,6 +95,9 @@ fun SettingsScreen(
                         showChangePassword -> "Đổi mật khẩu"
                         showOtp -> "Xác thực OTP"
                         showLanguage -> "Ngôn ngữ"
+                        showCurrency -> "Đơn vị tiền tệ"
+                        showFeedback -> "Báo lỗi hoặc phản hồi"
+                        showRating -> "Đánh giá"
                         else -> "Cài đặt"
                     },
                     color = Color.White,
@@ -100,8 +111,7 @@ fun SettingsScreen(
             if (showProfile) {
                 currentUser?.let { user ->
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                             .background(Color(0xFF1565C0))
                             .padding(16.dp)
                     ) {
@@ -113,7 +123,6 @@ fun SettingsScreen(
 
             // ===== ĐỔI MẬT KHẨU =====
             else if (showChangePassword) {
-
                 OutlinedTextField(
                     value = oldPassword,
                     onValueChange = { oldPassword = it },
@@ -155,107 +164,112 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        scope.launch {
-                            val user = currentUser
-
-                            when {
-                                user == null ->
-                                    snackbarHostState.showSnackbar("Không tìm thấy người dùng")
-
-                                oldPassword != user.password ->
-                                    snackbarHostState.showSnackbar("Mật khẩu cũ sai")
-
-                                newPassword != confirmPassword ->
-                                    snackbarHostState.showSnackbar("Mật khẩu không khớp")
-
-                                newPassword.length < 6 ->
-                                    snackbarHostState.showSnackbar("Mật khẩu phải ≥ 6 ký tự")
-
-                                else -> {
-                                    otpCode = Random.nextInt(100000, 999999).toString()
-                                    snackbarHostState.showSnackbar("OTP của bạn: $otpCode")
-                                    showOtp = true
-                                    showChangePassword = false
-                                }
+                Button(modifier = Modifier.fillMaxWidth(), onClick = {
+                    scope.launch {
+                        val user = currentUser
+                        when {
+                            user == null -> snackbarHostState.showSnackbar("Không tìm thấy người dùng")
+                            oldPassword != user.password -> snackbarHostState.showSnackbar("Sai mật khẩu")
+                            newPassword != confirmPassword -> snackbarHostState.showSnackbar("Mật khẩu không khớp")
+                            newPassword.length < 6 -> snackbarHostState.showSnackbar("Mật khẩu ≥ 6 ký tự")
+                            else -> {
+                                otpCode = Random.nextInt(100000, 999999).toString()
+                                snackbarHostState.showSnackbar("OTP: $otpCode")
+                                showOtp = true
+                                showChangePassword = false
                             }
                         }
                     }
-                ) {
-                    Text("Tiếp tục")
-                }
+                }) { Text("Tiếp tục") }
             }
 
             // ===== OTP =====
             else if (showOtp) {
-
                 OutlinedTextField(
                     value = inputOtp,
                     onValueChange = { inputOtp = it },
-                    label = { Text("Nhập mã OTP") },
+                    label = { Text("Nhập OTP") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        scope.launch {
-                            val user = currentUser
-
-                            if (inputOtp == otpCode && user != null) {
-                                userDao.updateUserPassword(user.email, newPassword)
-                                snackbarHostState.showSnackbar("✅ Đổi mật khẩu thành công")
-                                onLogout()
-                            } else {
-                                snackbarHostState.showSnackbar("❌ OTP không đúng")
-                            }
-                        }
+                Button(modifier = Modifier.fillMaxWidth(), onClick = {
+                    scope.launch {
+                        val user = currentUser
+                        if (inputOtp == otpCode && user != null) {
+                            userDao.updateUserPassword(user.email, newPassword)
+                            snackbarHostState.showSnackbar("✅ Đổi mật khẩu thành công")
+                            onLogout()
+                        } else snackbarHostState.showSnackbar("❌ OTP sai")
                     }
-                ) {
-                    Text("Xác nhận OTP")
-                }
+                }) { Text("Xác nhận OTP") }
             }
 
-            // ===== ĐỔI NGÔN NGỮ =====
+            // ===== NGÔN NGỮ =====
             else if (showLanguage) {
-
-                val languages = listOf("Tiếng Việt", "English", "日本語", "한국어")
-
-                languages.forEach { lang ->
-                    Button(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (lang == selectedLanguage)
-                                Color(0xFF2E7D32)
-                            else
-                                Color(0xFF1565C0)
-                        ),
-                        onClick = {
-                            selectedLanguage = lang
-                            scope.launch {
-                                snackbarHostState.showSnackbar("✅ Đã chọn $lang")
-                            }
-                        }
-                    ) {
-                        Text(lang)
-                    }
+                listOf("Tiếng Việt", "English", "日本語", "한국어").forEach {
+                    Button(modifier = Modifier.fillMaxWidth().padding(6.dp), onClick = {
+                        selectedLanguage = it
+                        scope.launch { snackbarHostState.showSnackbar("✅ Đã chọn $it") }
+                    }) { Text(it) }
                 }
             }
 
-            // ===== MENU ĐẦY ĐỦ (KHÔNG MẤT CHỨC NĂNG) =====
+            // ===== ĐƠN VỊ TIỀN TỆ =====
+            else if (showCurrency) {
+                listOf("VND", "USD", "EUR", "JPY").forEach {
+                    Button(modifier = Modifier.fillMaxWidth().padding(6.dp), onClick = {
+                        selectedCurrency = it
+                        scope.launch { snackbarHostState.showSnackbar("✅ Đã chọn $it") }
+                    }) { Text(it) }
+                }
+            }
+
+            // ===== PHẢN HỒI =====
+            else if (showFeedback) {
+                OutlinedTextField(
+                    value = feedbackText,
+                    onValueChange = { feedbackText = it },
+                    label = { Text("Nhập nội dung phản hồi") },
+                    modifier = Modifier.fillMaxWidth().height(140.dp)
+                )
+
+                Button(modifier = Modifier.fillMaxWidth(), onClick = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("✅ Gửi phản hồi thành công")
+                        feedbackText = ""
+                    }
+                }) { Text("Gửi phản hồi") }
+            }
+
+            // ===== ĐÁNH GIÁ =====
+            else if (showRating) {
+                Text("Chọn số sao:", color = Color.White)
+                Row {
+                    repeat(5) { index ->
+                        IconButton(onClick = { rating = index + 1 }) {
+                            Icon(
+                                Icons.Default.Star,
+                                null,
+                                tint = if (index < rating) Color.Yellow else Color.Gray
+                            )
+                        }
+                    }
+                }
+
+                Button(modifier = Modifier.fillMaxWidth(), onClick = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("✅ Cảm ơn bạn đã đánh giá $rating sao!")
+                    }
+                }) { Text("Gửi đánh giá") }
+            }
+
+            // ===== MENU GIỮ NGUYÊN ICON CŨ =====
             else {
                 val buttonList = listOf(
                     Triple("Thông tin cá nhân", Icons.Default.Person, Color(0xFF1565C0)),
                     Triple("Đổi mật khẩu", Icons.Default.Lock, Color(0xFF1565C0)),
                     Triple("Ngôn ngữ", Icons.Default.Language, Color(0xFF1565C0)),
                     Triple("Đơn vị tiền tệ", Icons.Default.AttachMoney, Color(0xFF1565C0)),
-                    Triple("Các tài khoản", Icons.Default.AccountBox, Color(0xFF1565C0)),
                     Triple("Báo lỗi hoặc phản hồi", Icons.Default.Chat, Color(0xFF1565C0)),
                     Triple("Đánh giá", Icons.Default.Favorite, Color(0xFF1565C0)),
                     Triple("Đăng xuất", Icons.Default.PowerSettingsNew, Color(0xFFD32F2F))
@@ -263,18 +277,19 @@ fun SettingsScreen(
 
                 buttonList.forEach { (text, icon, color) ->
                     Button(
+                        modifier = Modifier.fillMaxWidth().padding(6.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = color),
                         onClick = {
                             when (text) {
                                 "Thông tin cá nhân" -> showProfile = true
                                 "Đổi mật khẩu" -> showChangePassword = true
                                 "Ngôn ngữ" -> showLanguage = true
+                                "Đơn vị tiền tệ" -> showCurrency = true
+                                "Báo lỗi hoặc phản hồi" -> showFeedback = true
+                                "Đánh giá" -> showRating = true
                                 "Đăng xuất" -> onLogout()
                             }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = color),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp)
+                        }
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
