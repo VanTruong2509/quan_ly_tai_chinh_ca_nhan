@@ -21,6 +21,9 @@ import com.example.moneyfy.ui.screens.home.HomeViewModel
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.platform.LocalContext
+import com.example.moneyfy.ui.screens.notification.addNotificationSQL
+
 
 @Composable
 fun AddExpenseScreen(
@@ -28,6 +31,7 @@ fun AddExpenseScreen(
     homeViewModel: HomeViewModel,
     selectedCategory: String? = null
 ) {
+    val context = LocalContext.current
     var amount by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var category by remember { mutableStateOf(selectedCategory ?: "Danh mục") }
@@ -116,12 +120,26 @@ fun AddExpenseScreen(
         )
 
         // GHI CHÚ
-        FormItem(
-            label = "Ghi chú",
+        OutlinedTextField(
             value = note,
-            icon = Icons.Default.Note,
-            onClick = {}
+            onValueChange = { note = it },
+            label = { Text("Ghi chú") },
+            leadingIcon = {
+                Icon(Icons.Default.Note, contentDescription = null)
+            },
+            modifier = Modifier
+                .fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.Cyan,
+                unfocusedBorderColor = Color.Gray,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                cursorColor = Color.White
+            ),
+            singleLine = false,
+            maxLines = 3
         )
+
 
         Spacer(Modifier.weight(1f))
 
@@ -130,22 +148,40 @@ fun AddExpenseScreen(
             onClick = {
                 val amt = amount.toFloatOrNull() ?: 0f
                 if (amt > 0f) {
+
                     if (isExpense) {
                         homeViewModel.addSpending(
                             amount = amt,
                             category = category,
                             note = note
                         )
+
+                        // ✅ LƯU THÔNG BÁO CHI TIÊU VÀO SQLITE
+                        addNotificationSQL(
+                            context = context,
+                            title = "Chi tiêu mới",
+                            content = "Bạn vừa chi ${amt.toInt()}₫ cho $category"
+                        )
+
                     } else {
                         homeViewModel.addIncome(
                             amount = amt,
                             category = category,
                             note = note
                         )
+
+                        // ✅ LƯU THÔNG BÁO THU NHẬP
+                        addNotificationSQL(
+                            context = context,
+                            title = "Thu nhập mới",
+                            content = "Bạn vừa nhận ${amt.toInt()}₫ từ $category"
+                        )
                     }
+
                     navController.popBackStack("home", inclusive = false)
                 }
             },
+
             modifier = Modifier
                 .fillMaxWidth()
                 .height(55.dp),
