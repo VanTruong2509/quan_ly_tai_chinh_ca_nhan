@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -24,30 +23,90 @@ fun SubCategoryScreen(
     categoryId: Int,
     categoryName: String
 ) {
-    // Icon cho danh mục chính
+    // ===== ICON CHO DANH MỤC CHÍNH =====
     val mainIcon: ImageVector = when (categoryId) {
         1 -> Icons.Default.Restaurant
         2 -> Icons.Default.ShoppingBag
         3 -> Icons.Default.Home
         4 -> Icons.Default.DirectionsCar
+        5 -> Icons.Default.TrendingUp
+        6 -> Icons.Default.AccountBalance
+        7 -> Icons.Default.EmojiEvents
         else -> Icons.Default.Category
     }
 
-    // Icon cho subcategory
+    // ===== ICON CHO SUBCATEGORY (KHÔNG BỊ LẶP) =====
     fun subIcon(index: Int): ImageVector {
-        return when (index) {
-            0 -> Icons.Default.CheckCircle
-            1 -> Icons.Default.Eco
-            2 -> Icons.Default.LocalDining
-            else -> Icons.Default.Coffee
+        return when (index % 6) {
+            0 -> Icons.Default.Fastfood
+            1 -> Icons.Default.LocalCafe
+            2 -> Icons.Default.ShoppingCart
+            3 -> Icons.Default.Home
+            4 -> Icons.Default.DirectionsCar
+            else -> Icons.Default.Star
         }
     }
 
+    // ===== SUBCATEGORY ĐẦY ĐỦ – KHÔNG CÒN "KHÁC 1", "KHÁC 2" =====
     val subCategories = when (categoryId) {
-        1 -> listOf("Thực phẩm", "Nhà hàng, đồ ăn nhanh", "Quán bar, quán cà phê")
-        2 -> listOf("Quần áo", "Phụ kiện", "Mỹ phẩm")
-        3 -> listOf("Tiền nhà", "Điện nước", "Internet")
-        else -> listOf("Khác 1", "Khác 2")
+        1 -> listOf(
+            "Thực phẩm",
+            "Nhà hàng",
+            "Quán cà phê",
+            "Ăn vặt",
+            "Đồ uống"
+        )
+
+        2 -> listOf(
+            "Quần áo",
+            "Giày dép",
+            "Phụ kiện",
+            "Mỹ phẩm",
+            "Điện tử"
+        )
+
+        3 -> listOf(
+            "Tiền nhà",
+            "Điện",
+            "Nước",
+            "Internet",
+            "Sửa chữa"
+        )
+
+        4 -> listOf(
+            "Xăng xe",
+            "Gửi xe",
+            "Bảo dưỡng",
+            "Rửa xe",
+            "Vé xe"
+        )
+
+        5 -> listOf(
+            "Chứng khoán",
+            "Tiết kiệm",
+            "Crypto",
+            "Góp vốn"
+        )
+
+        6 -> listOf(
+            "Vay nợ",
+            "Trả góp",
+            "Lãi suất",
+            "Phí ngân hàng"
+        )
+
+        7 -> listOf(
+            "Xem phim",
+            "Du lịch",
+            "Game",
+            "Mua sắm giải trí"
+        )
+
+        else -> listOf(
+            "Chi tiêu khác",
+            "Phát sinh",
+            "Không phân loại"
+        )
     }
 
     Column(
@@ -118,7 +177,6 @@ fun SubCategoryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            // Navigate về AddExpenseScreen với category được chọn
                             navController.navigate("add_expense?category=$subCategoryName") {
                                 popUpTo("add_expense") { inclusive = true }
                             }
@@ -141,6 +199,7 @@ fun SubCategoryScreen(
                         fontSize = 16.sp
                     )
                 }
+
                 Spacer(modifier = Modifier.height(10.dp))
             }
         }
