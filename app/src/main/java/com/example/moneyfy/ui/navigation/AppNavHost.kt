@@ -132,7 +132,6 @@ fun MainNavigation(rootNavController: NavHostController) {
 
             composable("notification") {
                 NotificationScreen(
-                    homeViewModel = homeViewModel,
                     onBackClick = { innerNavController.popBackStack() }
                 )
             }
