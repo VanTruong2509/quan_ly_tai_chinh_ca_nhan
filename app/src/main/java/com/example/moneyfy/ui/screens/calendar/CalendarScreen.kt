@@ -31,7 +31,6 @@ import java.util.*
 @Composable
 fun CalendarScreen(spendings: List<Spending>) {
 
-    // --- TRẠNG THÁI THÁNG VÀ NĂM ĐANG HIỂN THỊ ---
     var currentMonth by remember { mutableStateOf(Calendar.getInstance().get(Calendar.MONTH) + 1) }
     var currentYear by remember { mutableStateOf(Calendar.getInstance().get(Calendar.YEAR)) }
 
@@ -39,7 +38,6 @@ fun CalendarScreen(spendings: List<Spending>) {
     val realMonth = Calendar.getInstance().get(Calendar.MONTH) + 1
     val realYear = Calendar.getInstance().get(Calendar.YEAR)
 
-    // Calendar xử lý tháng/năm
     val calendar = Calendar.getInstance()
     calendar.set(Calendar.YEAR, currentYear)
     calendar.set(Calendar.MONTH, currentMonth - 1)
@@ -48,25 +46,23 @@ fun CalendarScreen(spendings: List<Spending>) {
     val maxDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
     val startDayOfWeek = (calendar.get(Calendar.DAY_OF_WEEK) + 6) % 7
 
-    // Tạo danh sách ngày
     val days = mutableListOf<String>()
     repeat(startDayOfWeek) { days.add("") }
     for (day in 1..maxDay) days.add(day.toString())
 
-    // Tổng chi theo ngày
     val dailySpending: Map<Int, Float> = spendings
-        .filter { s ->
+        .filter {
             val cal = Calendar.getInstance()
-            cal.timeInMillis = s.timestamp
+            cal.timeInMillis = it.timestamp
             cal.get(Calendar.MONTH) + 1 == currentMonth &&
                     cal.get(Calendar.YEAR) == currentYear
         }
-        .groupBy { s ->
+        .groupBy {
             val cal = Calendar.getInstance()
-            cal.timeInMillis = s.timestamp
+            cal.timeInMillis = it.timestamp
             cal.get(Calendar.DAY_OF_MONTH)
         }
-        .mapValues { entry -> entry.value.sumOf { it.amount.toDouble() }.toFloat() }
+        .mapValues { it.value.sumOf { s -> s.amount.toDouble() }.toFloat() }
 
     var selectedDay by remember { mutableStateOf<Int?>(null) }
 
@@ -77,7 +73,7 @@ fun CalendarScreen(spendings: List<Spending>) {
             .padding(16.dp)
     ) {
 
-        // --- TIÊU ĐỀ THÁNG + NÚT LÙI / TIẾN ---
+        // ===== HEADER =====
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -92,7 +88,7 @@ fun CalendarScreen(spendings: List<Spending>) {
                 }
                 selectedDay = null
             }) {
-                Icon(Icons.Default.ArrowBackIos, contentDescription = "Previous", tint = Color.White)
+                Icon(Icons.Default.ArrowBackIos, contentDescription = "", tint = Color.White)
             }
 
             Text(
@@ -110,15 +106,14 @@ fun CalendarScreen(spendings: List<Spending>) {
                 }
                 selectedDay = null
             }) {
-                Icon(Icons.Default.ArrowForwardIos, contentDescription = "Next", tint = Color.White)
+                Icon(Icons.Default.ArrowForwardIos, contentDescription = "", tint = Color.White)
             }
         }
 
         Spacer(Modifier.height(12.dp))
 
-        // Tên các ngày trong tuần
         val weekdays = listOf("CN", "T2", "T3", "T4", "T5", "T6", "T7")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(Modifier.fillMaxWidth()) {
             weekdays.forEach {
                 Text(it, color = Color.Gray, fontSize = 14.sp, modifier = Modifier.weight(1f))
             }
@@ -126,7 +121,7 @@ fun CalendarScreen(spendings: List<Spending>) {
 
         Spacer(Modifier.height(8.dp))
 
-        // --- Lưới ngày trong tháng ---
+        // ===== LƯỚI NGÀY =====
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
             modifier = Modifier.fillMaxWidth(),
@@ -137,20 +132,23 @@ fun CalendarScreen(spendings: List<Spending>) {
                 val dayInt = dayStr.toIntOrNull()
 
                 val isToday =
-                    dayInt != null && dayInt == today && currentMonth == realMonth && currentYear == realYear
+                    dayInt != null && dayInt == today &&
+                            currentMonth == realMonth &&
+                            currentYear == realYear
 
+                // ✅ LOGIC MÀU CHUẨN THEO YÊU CẦU
                 val bgColor = when {
-                    dayInt == selectedDay -> Color(0xFF2979FF)
-                    isToday -> Color(0xFF00C853)
-                    else -> Color(0xFF1E1E1E)
+                    dayInt == selectedDay -> Color(0xFF22C55E)
+                    isToday -> Color(0xFFFF0000)
+                    else -> Color(0xFF3B82F6)
                 }
 
                 Box(
                     modifier = Modifier
                         .aspectRatio(1f)
                         .background(bgColor, shape = MaterialTheme.shapes.small)
-                        .border(1.dp, Color.Gray, shape = MaterialTheme.shapes.small)
-                        .clickable(enabled = dayInt != null && dailySpending.containsKey(dayInt)) {
+                        .border(1.dp, Color(0xFF1E40AF), shape = MaterialTheme.shapes.small)
+                        .clickable(enabled = dayInt != null) {
                             selectedDay = if (selectedDay == dayInt) null else dayInt
                         },
                     contentAlignment = Alignment.Center
@@ -161,7 +159,7 @@ fun CalendarScreen(spendings: List<Spending>) {
                         if (dayInt != null && dailySpending[dayInt] != null) {
                             Text(
                                 text = "${dailySpending[dayInt]!!.toInt()}đ",
-                                color = Color.Red,
+                                color = Color(0xFFF87171),
                                 fontSize = 10.sp
                             )
                         }
@@ -172,7 +170,7 @@ fun CalendarScreen(spendings: List<Spending>) {
 
         Spacer(Modifier.height(16.dp))
 
-        // --- DANH SÁCH GIAO DỊCH CỦA NGÀY ĐƯỢC CHỌN ---
+        // ===== DANH SÁCH GIAO DỊCH =====
         selectedDay?.let { day ->
             val spendingsOfDay = spendings.filter {
                 val cal = Calendar.getInstance()
@@ -188,12 +186,14 @@ fun CalendarScreen(spendings: List<Spending>) {
                     .background(Color(0xFF1E1E1E), shape = MaterialTheme.shapes.medium)
                     .padding(12.dp)
             ) {
+
                 Text(
                     "Chi tiêu ngày $day",
                     color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
+
                 Spacer(Modifier.height(8.dp))
 
                 if (spendingsOfDay.isEmpty()) {
@@ -212,7 +212,7 @@ fun CalendarScreen(spendings: List<Spending>) {
                                         .format(s.amount.toInt())
                                 } đ" +
                                         if (s.note.isNotEmpty()) " - ${s.note}" else "",
-                                color = Color.Gray,
+                                color = Color(0xFF9CA3AF),
                                 modifier = Modifier.padding(vertical = 4.dp)
                             )
                         }
